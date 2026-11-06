@@ -61,6 +61,9 @@ Et dans le bloc **REGLAGES** en haut du `<script>` (fin du fichier) :
 - `…/index.html?apercu` saute le compte à rebours, et à la question n'importe
   quelle réponse (même vide) passe.
 - `…/index.html?reset` fait oublier la bonne réponse, pour revoir la question.
+- `…/index.html?compte=20` montre le compte à rebours comme s’il restait 20 secondes
+  (pour voir les 10 dernières secondes en grand), puis enchaîne sur la suite.
+- `petitsMots` (dans les réglages) — les phrases qui défilent sous le compte à rebours.
 
 ## Mise en ligne
 

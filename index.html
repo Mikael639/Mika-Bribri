@@ -211,6 +211,91 @@
     color: var(--ink-faint);
   }
 
+  /* le coeur qu'on peut toucher pendant l'attente */
+  .count__heart {
+    padding: 6px;
+    border: 0;
+    background: none;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .count__heart .seal__heart { display: block; }
+  .count__heart.is-kiss .seal__heart { animation: kiss 0.5s cubic-bezier(0.3, 1.6, 0.5, 1); }
+  @keyframes kiss { 0% { transform: scale(1); } 35% { transform: scale(0.82); } 100% { transform: scale(1); } }
+  .count__tap {
+    margin: -8px 0 0;
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    color: var(--ink-faint);
+    animation: pulse 2.4s ease-in-out infinite;
+  }
+  .count__tap b { color: var(--rose); font-weight: 600; }
+
+  /* petits mots qui s'ecrivent pendant l'attente */
+  .tease {
+    min-height: 3.6em;
+    margin: -6px 0 0;
+    max-width: 330px;
+    font-family: var(--hand);
+    font-size: clamp(15px, 4.4vw, 18px);
+    line-height: 1.8;
+    word-spacing: 0.28em;
+    color: var(--rose-deep);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+  }
+  .tease.is-out { opacity: 0; transform: translateY(-6px); }
+
+  /* l'heure chez lui et chez elle */
+  .clocks { display: flex; align-items: center; justify-content: center; gap: 6px; }
+  .clock {
+    display: grid;
+    grid-template-columns: auto auto;
+    align-items: center;
+    column-gap: 7px;
+    padding: 8px 12px;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    box-shadow: 0 6px 16px rgba(122, 62, 78, 0.07);
+  }
+  .clock__flag { grid-row: span 2; width: 20px; height: 20px; }
+  .clock__time { font-size: 18px; font-weight: 600; line-height: 1.1; color: var(--ink); font-variant-numeric: tabular-nums; text-align: left; }
+  .clock__lbl { font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-faint); text-align: left; }
+  .clocks__link { width: 64px; height: 22px; flex: none; }
+
+  /* les 10 dernieres secondes */
+  .final10 {
+    position: fixed;
+    inset: 0;
+    z-index: 3;
+    display: grid;
+    place-items: center;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+  }
+  .final10 span {
+    font-family: var(--hand);
+    font-size: min(46vw, 260px);
+    line-height: 1;
+    color: var(--rose);
+    text-shadow: 0 12px 40px rgba(181, 103, 122, 0.35);
+  }
+  .final10 span.go { animation: bigTick 0.95s ease-out both; }
+  @keyframes bigTick {
+    0%   { transform: scale(1.6); opacity: 0; }
+    20%  { transform: scale(1); opacity: 1; }
+    80%  { transform: scale(0.92); opacity: 1; }
+    100% { transform: scale(0.7); opacity: 0; }
+  }
+  #sceneCount.is-final .final10 { opacity: 1; }
+  #sceneCount.is-final > :not(.final10) { opacity: 0.08; transition: opacity 0.6s ease; animation: none; }
+
+  @media (max-height: 640px) {
+    #sceneCount { gap: 18px; }
+    #sceneCount .seal__heart { width: 56px; height: 52px; }
+  }
+
   /* --- Question secrete --- */
   .gate { display: flex; flex-direction: column; gap: 14px; width: 100%; max-width: 340px; }
   .gate label { font-family: var(--hand); font-size: 27px; line-height: 1.25; color: var(--ink); }
@@ -820,14 +905,6 @@
   .note .ch { opacity: 0; color: var(--rose); transition: opacity 0.18s ease, color 1.4s ease; }
   .note .ch.on { opacity: 1; color: inherit; }
 
-  /* repere invisible : le stylo se place dessus */
-  .caret {
-    display: inline-block;
-    width: 1px;
-    height: 0.95em;
-    vertical-align: -0.12em;
-  }
-
   /* le stylo qui ecrit */
   .pen {
     position: absolute;
@@ -838,7 +915,7 @@
     height: 90px;
     pointer-events: none;
     opacity: 0;
-    transition: opacity 0.4s ease, transform 0.09s linear;
+    transition: opacity 0.4s ease, transform 0.07s linear;
     will-change: transform;
   }
   .pen.is-on { opacity: 1; }
@@ -1313,7 +1390,9 @@
 
   <!-- 1a. Compte a rebours -->
   <div class="scene" id="sceneCount" hidden>
-    <svg class="seal__heart" viewBox="0 0 100 92" aria-hidden="true"><use href="#heart-shape" fill="#B5677A"/></svg>
+    <button class="count__heart" id="countHeart" type="button" aria-label="Envoyer un bisou">
+      <svg class="seal__heart" viewBox="0 0 100 92" aria-hidden="true"><use href="#heart-shape" fill="#B5677A"/></svg>
+    </button>
     <h1 class="seal__title">Encore un peu<br>de patience, Brigitte</h1>
     <div class="count" role="timer" aria-live="off">
       <div class="count__cell"><span class="count__num" id="cD">0</span><span class="count__lbl">jours</span></div>
@@ -1322,6 +1401,30 @@
       <div class="count__cell"><span class="count__num" id="cS">00</span><span class="count__lbl">sec</span></div>
     </div>
     <p class="seal__text">Ta surprise s'ouvre le 8 novembre à minuit.</p>
+    <p class="tease" id="tease" aria-live="polite"></p>
+    <div class="clocks" aria-label="L'heure chez nous deux">
+      <div class="clock">
+        <svg class="clock__flag" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="8.5" fill="url(#flagFR)" stroke="#FFFFFF" stroke-width="2"/></svg>
+        <span class="clock__time" id="clkMe">--:--</span>
+        <span class="clock__lbl" id="clkMeLbl">chez moi</span>
+      </div>
+      <svg class="clocks__link" viewBox="0 0 90 30" aria-hidden="true">
+        <path id="clkPath" d="M4,24 C28,2 62,2 86,24" fill="none" stroke="#E8B4BE" stroke-width="1.6" stroke-dasharray="4 5" stroke-linecap="round"/>
+        <g>
+          <use href="#heart-shape" transform="translate(-6 -5.5) scale(0.12)" fill="#D58A9B"/>
+          <animateMotion dur="3.6s" repeatCount="indefinite" keyPoints="0;1;0" keyTimes="0;0.5;1" calcMode="spline" keySplines="0.45 0 0.55 1;0.45 0 0.55 1">
+            <mpath href="#clkPath" xlink:href="#clkPath"/>
+          </animateMotion>
+        </g>
+      </svg>
+      <div class="clock">
+        <svg class="clock__flag" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="8.5" fill="url(#flagML)" stroke="#FFFFFF" stroke-width="2"/></svg>
+        <span class="clock__time" id="clkYou">--:--</span>
+        <span class="clock__lbl" id="clkYouLbl">chez toi</span>
+      </div>
+    </div>
+    <p class="count__tap" id="countTap">Touche le cœur pour un bisou</p>
+    <div class="final10" id="final10" aria-hidden="true"><span id="final10Num">10</span></div>
   </div>
 
   <!-- 1b. La question secrete -->
@@ -1767,6 +1870,16 @@
     age: "20",
 
     // Petits bruitages (ouverture, perles, bougie, carillon). true ou false.
+    // Les petits mots qui defilent sous le compte a rebours (ajoute / change librement).
+    petitsMots: [
+      "Je compte les secondes avec toi.",
+      "Quelque chose de doux t'attend…",
+      "De la France au Mali, mon cœur est déjà chez toi.",
+      "Encore quelques dodos, ma princesse.",
+      "Prépare ton plus beau sourire.",
+      "Ne triche pas, hein !",
+      "Là, maintenant, je pense à toi."
+    ],
     effetsSonores: true,
     // Vibrations aux moments forts (telephones Android).
     vibrations: true,
@@ -1807,7 +1920,7 @@
   function $(id) { return document.getElementById(id); }
   function rnd(a, b) { return a + Math.random() * (b - a); }
   function pick(a) { return a[Math.floor(Math.random() * a.length)]; }
-  function buzz(p) { if (CONFIG.vibrations && navigator.vibrate) { try { navigator.vibrate(p); } catch (e) {} } }
+  function buzz(p) { if (CONFIG.vibrations && navigator.vibrate && !(navigator.userActivation && !navigator.userActivation.hasBeenActive)) { try { navigator.vibrate(p); } catch (e) {} } }
   function center(el) { var r = el.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; }
 
   if (params.has("reset")) { try { localStorage.removeItem(KEY); } catch (e) {} }
@@ -1835,7 +1948,14 @@
       ctx.setTransform(d, 0, 0, d, 0, 0);
     }
     size();
-    window.addEventListener("resize", size);
+    var sizeRaf = 0;
+    window.addEventListener("resize", function () {
+      if (sizeRaf) { return; }
+      sizeRaf = window.requestAnimationFrame(function () {
+        sizeRaf = 0;
+        if (window.innerWidth !== W || Math.abs(window.innerHeight - H) > 2) { size(); }
+      });
+    });
 
     function add(p) {
       if (reduce) { return; }
@@ -2209,24 +2329,94 @@
     el.textContent = v;
     el.classList.remove("tick"); void el.offsetWidth; el.classList.add("tick");
   }
+  // l'heure chez lui et chez elle
+  var clkFmt = {};
+  function clockText(tz) {
+    try {
+      if (!clkFmt[tz]) { clkFmt[tz] = new Intl.DateTimeFormat("fr-FR", { hour: "2-digit", minute: "2-digit", timeZone: tz }); }
+      return clkFmt[tz].format(new Date());
+    } catch (e) { return ""; }
+  }
+  function updateClocks() {
+    var a = clockText("Europe/Paris"), b = clockText("Africa/Bamako");
+    if (a) { $("clkMe").textContent = a; }
+    if (b) { $("clkYou").textContent = b; }
+  }
+  $("clkMeLbl").textContent = CONFIG.distance && CONFIG.distance.maVille ? CONFIG.distance.maVille : "chez moi";
+  $("clkYouLbl").textContent = CONFIG.distance && CONFIG.distance.taVille ? CONFIG.distance.taVille : "chez toi";
+
+  // les petits mots, l'un apres l'autre
+  var MOTS = CONFIG.petitsMots || [], motIdx = -1, motTimer = null;
+  function nextMot() {
+    if (!MOTS.length) { return; }
+    var el = $("tease");
+    motIdx = (motIdx + 1) % MOTS.length;
+    el.classList.add("is-out");
+    window.setTimeout(function () {
+      el.textContent = MOTS[motIdx];
+      el.classList.remove("is-out");
+    }, el.textContent ? 600 : 0);
+  }
+  function startMots() {
+    nextMot();
+    window.clearInterval(motTimer);
+    motTimer = window.setInterval(nextMot, 5200);
+  }
+
+  // un bisou a chaque toucher du coeur
+  var kisses = 0;
+  $("countHeart").addEventListener("click", function () {
+    var b = $("countHeart"), c = center(b);
+    b.classList.remove("is-kiss"); void b.offsetWidth; b.classList.add("is-kiss");
+    fx.burst(c.x, c.y, { n: 18, sp: [140, 420], ang: -90, spread: 150, shapes: ["heart", "heart", "dot"] });
+    sfx.pop();
+    buzz(12);
+    kisses++;
+    $("countTap").innerHTML = kisses === 1 ? "<b>1</b> bisou envoyé" : "<b>" + kisses + "</b> bisous envoyés";
+    startMots();
+  });
+
+  // les 10 dernieres secondes, en grand
+  var lastBig = -1;
+  function bigCount(n) {
+    if (n === lastBig) { return; }
+    lastBig = n;
+    scenes.count.classList.add("is-final");
+    var el = $("final10Num");
+    el.textContent = n;
+    el.classList.remove("go"); void el.offsetWidth; el.classList.add("go");
+    if (n <= 3) { buzz(30); }
+    sfx.plink(10 - n);
+  }
+
   function tick() {
     var ms = target - Date.now();
     if (ms <= 0) {
       window.clearInterval(countTimer);
+      window.clearInterval(motTimer);
+      scenes.count.classList.remove("is-final");
       fx.cannons(0);
+      sfx.tada();
       afterCount();
       return;
     }
+    updateClocks();
+    if (ms <= 10000 && !reduce) { bigCount(Math.ceil(ms / 1000)); }
     var s = Math.floor(ms / 1000);
     setNum("cD", Math.floor(s / 86400));
     setNum("cH", pad(Math.floor((s % 86400) / 3600)));
     setNum("cM", pad(Math.floor((s % 3600) / 60)));
     setNum("cS", pad(s % 60));
   }
+  if (params.has("compte")) {
+    var testSec = parseInt(params.get("compte"), 10);
+    if (testSec > 0) { target = Date.now() + testSec * 1000; }
+  }
   function start() {
     fx.ambient(true);
-    if (!preview && !isNaN(target) && Date.now() < target) {
+    if ((!preview || params.has("compte")) && !isNaN(target) && Date.now() < target) {
       show("count");
+      startMots();
       tick();
       countTimer = window.setInterval(tick, 1000);
     } else {
@@ -2656,9 +2846,6 @@
   /* --- 3. Le message qui s'ecrit lettre par lettre --- */
   var note = $("note");
   var chars = [];
-  var caret = document.createElement("span");
-  caret.className = "caret";
-  caret.setAttribute("aria-hidden", "true");
   var typeIdx = 0, typeTimer = null;
 
   (function prepareNote() {
@@ -2739,12 +2926,13 @@
   note.appendChild(pen);
 
   // place la pointe du stylo sur la derniere lettre ecrite
+  var tip = null; // derniere lettre ecrite : la pointe de la plume se pose dessus
   function movePen(lift) {
-    if (!caret.parentNode) { return; }
+    if (!tip) { return; }
     var nr = note.getBoundingClientRect();
-    var cr = caret.getBoundingClientRect();
-    var x = cr.left - nr.left - 40;
-    var y = cr.bottom - nr.top - 86;
+    var cr = tip.getBoundingClientRect();
+    var x = cr.right - nr.left - 40;
+    var y = cr.top + cr.height * 0.72 - nr.top - 86;
     pen.style.transform = "translate(" + x.toFixed(1) + "px," + y.toFixed(1) + "px)";
     pen.classList.toggle("is-lift", !!lift);
   }
@@ -2766,21 +2954,22 @@
   }
 
   function typeStep() {
-    if (typeIdx >= chars.length) { penAway(); caret.remove(); return; }
+    if (typeIdx >= chars.length) { penAway(); tip = null; return; }
     var c = chars[typeIdx++];
     c.classList.add("on");
-    c.after(caret);
+    tip = c;
     var ch = c.textContent;
-    var delay = ch === " " ? 95 : 62 + Math.random() * 26;
-    if (c.hasAttribute("data-end")) { delay = 1100; }
-    else if (/[.!?…]/.test(ch)) { delay = 620; }
-    else if (/[,;:]/.test(ch)) { delay = 320; }
+    // rythme : environ 30 lettres par seconde, petites pauses sur la ponctuation
+    var delay = ch === " " ? 42 : 26 + Math.random() * 12;
+    if (c.hasAttribute("data-end")) { delay = 650; }
+    else if (/[.!?…]/.test(ch)) { delay = 320; }
+    else if (/[,;:]/.test(ch)) { delay = 150; }
     if (typeIdx === 1) { fx.butterflies(note); pen.classList.remove("is-leaving"); pen.classList.add("is-on", "is-writing"); $("noteHint").classList.add("is-on"); }
     movePen(delay >= 300);
     followPen();
-    if (typeIdx % 14 === 0 || delay >= 600) {
-      var cr = caret.getBoundingClientRect();
-      fx.trail(cr.left, cr.bottom - 4);
+    if (typeIdx % 24 === 0 || delay >= 600) {
+      var cr = tip.getBoundingClientRect();
+      fx.trail(cr.right, cr.top + cr.height * 0.68);
     }
     typeTimer = window.setTimeout(typeStep, delay);
   }
@@ -2789,14 +2978,14 @@
     for (var i = 0; i < chars.length; i++) { chars[i].classList.add("on"); }
     typeIdx = chars.length;
     penAway();
-    caret.remove();
+    tip = null;
   }
   function typeReset() {
     fx.butterflies(null);
     window.clearTimeout(typeTimer);
     for (var i = 0; i < chars.length; i++) { chars[i].classList.remove("on"); }
     typeIdx = 0;
-    caret.remove();
+    tip = null;
     penReset();
   }
   window.addEventListener("resize", function () { if (typeIdx > 0 && typeIdx < chars.length) { movePen(false); } });
@@ -2815,8 +3004,8 @@
     window.addEventListener(ev, function () { lastUserScroll = Date.now(); }, { passive: true });
   });
   function followPen() {
-    if (Date.now() - lastUserScroll < 4000 || !caret.parentNode) { return; }
-    var r = caret.getBoundingClientRect();
+    if (Date.now() - lastUserScroll < 4000 || !tip) { return; }
+    var r = tip.getBoundingClientRect();
     var limit = window.innerHeight * 0.7;
     if (r.bottom > limit) { window.scrollBy({ top: r.bottom - window.innerHeight * 0.45, behavior: "smooth" }); }
   }
@@ -3904,6 +4093,7 @@ import gsap from "gsap";
      REDIMENSIONNEMENT & PROJECTION 3D -> ECRAN
      ------------------------------------------------------------------ */
   function resize() {
+    if (!running) { return; }
     var gw = giftBtn.clientWidth || Math.min(224, window.innerWidth * 0.56);
     var gh = giftBtn.clientHeight || gw * 1.14;
     var w = Math.round(gw * 1.76);
