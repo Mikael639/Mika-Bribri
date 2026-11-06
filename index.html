@@ -2959,6 +2959,7 @@
       '</g>' +
     '</svg>';
   })();
+  if (params.has("sansplume")) { pen.style.display = "none"; }
   note.appendChild(pen);
 
   // place la pointe du stylo sur la derniere lettre ecrite
@@ -3006,10 +3007,10 @@
     if (c.hasAttribute("data-end")) { delay = run + 650; }
     else if (/[.!?…]/.test(ch)) { delay = run + 320; }
     else if (/[,;:]/.test(ch)) { delay = run + 150; }
-    if (typeIdx === 1) { fx.butterflies(note); pen.classList.remove("is-leaving"); pen.classList.add("is-on", "is-writing"); $("noteHint").classList.add("is-on"); }
+    if (typeIdx === 1) { if (!params.has("sanspapillons")) { fx.butterflies(note); } pen.classList.remove("is-leaving"); pen.classList.add("is-on", "is-writing"); $("noteHint").classList.add("is-on"); }
     movePen(delay >= run + 300, run);
     followPen();
-    if (typeIdx % 4 === 0 || delay >= run + 300) {
+    if (!params.has("sanspapillons") && (typeIdx % 4 === 0 || delay >= run + 300)) {
       var cr = tip.getBoundingClientRect();
       fx.trail(cr.right, cr.top + cr.height * 0.68);
     }
@@ -3049,7 +3050,7 @@
   var lastFollow = 0;
   function followPen() {
     var now = Date.now();
-    if (lastUserScroll || now - lastFollow < 900 || !tip) { return; }
+    if (lastUserScroll || now - lastFollow < 900 || !tip || params.has("sanssuivi")) { return; }
     var r = tip.getBoundingClientRect();
     if (r.bottom > window.innerHeight * 0.7) {
       lastFollow = now;
