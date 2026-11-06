@@ -909,8 +909,9 @@
   .note__hint.is-on { opacity: 1; animation: pulse 2.4s ease-in-out infinite; }
 
   /* l'encre arrive rose puis fonce */
-  .note .ch { opacity: 0; }
-  .note .ch.on { opacity: 1; transition: opacity 0.15s ease; }
+  .note .ch { clip-path: inset(-1em 100% -1.4em 0); }
+  .note .ch.on { clip-path: inset(-1em -0.4em -1.4em -0.3em); transition: clip-path 0.2s linear; }
+  .note .ch.now { transition: none; }
 
   /* le stylo qui ecrit */
   .pen {
@@ -2892,16 +2893,15 @@
       full.push(text);
       ps[i].textContent = "";
       ps[i].setAttribute("aria-hidden", "true");
-      // decoupe en vrais caracteres visibles : les emojis (❤️, 🦋) restent entiers
-      var glyphs = (window.Intl && Intl.Segmenter)
-        ? Array.from(new Intl.Segmenter("fr", { granularity: "grapheme" }).segment(text), function (g) { return g.segment; })
-        : Array.from(text);
-      for (var j = 0; j < glyphs.length; j++) {
+      // decoupe en mots : chaque mot est un seul element
+      var words = text.split(" ");
+      for (var j = 0; j < words.length; j++) {
         var sp = document.createElement("span");
         sp.className = "ch";
-        sp.textContent = glyphs[j];
-        if (j === glyphs.length - 1) { sp.setAttribute("data-end", "1"); }
+        sp.textContent = words[j];
+        if (j === words.length - 1) { sp.setAttribute("data-end", "1"); }
         ps[i].appendChild(sp);
+        if (j < words.length - 1) { ps[i].appendChild(document.createTextNode(" ")); }
         chars.push(sp);
       }
     }
@@ -2963,12 +2963,13 @@
 
   // place la pointe du stylo sur la derniere lettre ecrite
   var tip = null; // derniere lettre ecrite : la pointe de la plume se pose dessus
-  function movePen(lift) {
+  function movePen(lift, ms) {
     if (!tip) { return; }
     var nr = note.getBoundingClientRect();
     var cr = tip.getBoundingClientRect();
     var x = cr.right - nr.left - 40;
     var y = cr.top + cr.height * 0.72 - nr.top - 86;
+    pen.style.transitionDuration = "0.4s, " + (ms || 70) + "ms";
     pen.style.transform = "translate3d(" + x.toFixed(1) + "px," + y.toFixed(1) + "px,0)";
     pen.classList.toggle("is-lift", !!lift);
   }
@@ -2976,6 +2977,7 @@
     $("noteHint").classList.remove("is-on");
     $("noteFly").classList.add("is-drawn");
     pen.classList.remove("is-writing", "is-lift");
+    pen.style.transitionDuration = "";
     if (!pen.classList.contains("is-on")) { return; }
     var m = /translate3d\(([-\d.]+)px,([-\d.]+)px/.exec(pen.style.transform || "");
     if (m) { pen.style.transform = "translate(" + (+m[1] + 60) + "px," + (+m[2] - 40) + "px) rotate(12deg)"; }
@@ -2987,23 +2989,27 @@
     $("noteFly").classList.remove("is-drawn");
     pen.classList.remove("is-on", "is-writing", "is-lift", "is-leaving");
     pen.style.transform = "";
+    pen.style.transitionDuration = "";
   }
 
   function typeStep() {
     if (typeIdx >= chars.length) { penAway(); tip = null; return; }
     var c = chars[typeIdx++];
+    var word = c.textContent;
+    // rythme : environ 24 lettres par seconde, pauses sur la ponctuation
+    var run = 40 + word.length * 36;
+    c.style.transitionDuration = run + "ms";
     c.classList.add("on");
     tip = c;
-    var ch = c.textContent;
-    // rythme : environ 30 lettres par seconde, petites pauses sur la ponctuation
-    var delay = ch === " " ? 42 : 26 + Math.random() * 12;
-    if (c.hasAttribute("data-end")) { delay = 650; }
-    else if (/[.!?…]/.test(ch)) { delay = 320; }
-    else if (/[,;:]/.test(ch)) { delay = 150; }
+    var ch = word.charAt(word.length - 1);
+    var delay = run;
+    if (c.hasAttribute("data-end")) { delay = run + 650; }
+    else if (/[.!?…]/.test(ch)) { delay = run + 320; }
+    else if (/[,;:]/.test(ch)) { delay = run + 150; }
     if (typeIdx === 1) { fx.butterflies(note); pen.classList.remove("is-leaving"); pen.classList.add("is-on", "is-writing"); $("noteHint").classList.add("is-on"); }
-    movePen(delay >= 300);
+    movePen(delay >= run + 300, run);
     followPen();
-    if (typeIdx % 24 === 0 || delay >= 600) {
+    if (typeIdx % 4 === 0 || delay >= run + 300) {
       var cr = tip.getBoundingClientRect();
       fx.trail(cr.right, cr.top + cr.height * 0.68);
     }
@@ -3011,7 +3017,7 @@
   }
   function typeFinish() {
     window.clearTimeout(typeTimer);
-    for (var i = 0; i < chars.length; i++) { chars[i].classList.add("on"); }
+    for (var i = 0; i < chars.length; i++) { chars[i].classList.add("now", "on"); }
     typeIdx = chars.length;
     penAway();
     tip = null;
@@ -3019,9 +3025,10 @@
   function typeReset() {
     fx.butterflies(null);
     window.clearTimeout(typeTimer);
-    for (var i = 0; i < chars.length; i++) { chars[i].classList.remove("on"); }
+    for (var i = 0; i < chars.length; i++) { chars[i].classList.remove("on", "now"); chars[i].style.transitionDuration = ""; }
     typeIdx = 0;
     tip = null;
+    lastUserScroll = 0;
     penReset();
   }
   window.addEventListener("resize", function () { if (typeIdx > 0 && typeIdx < chars.length) { movePen(false); } });
@@ -3037,12 +3044,12 @@
   // la page suit la plume, sauf si elle fait defiler elle-meme
   var lastUserScroll = 0;
   ["touchstart", "wheel", "keydown"].forEach(function (ev) {
-    window.addEventListener(ev, function () { lastUserScroll = Date.now(); }, { passive: true });
+    window.addEventListener(ev, function () { if (typeIdx > 0 && typeIdx < chars.length) { lastUserScroll = Date.now(); } }, { passive: true });
   });
   var lastFollow = 0;
   function followPen() {
     var now = Date.now();
-    if (now - lastUserScroll < 4000 || now - lastFollow < 700 || !tip) { return; }
+    if (lastUserScroll || now - lastFollow < 900 || !tip) { return; }
     var r = tip.getBoundingClientRect();
     if (r.bottom > window.innerHeight * 0.7) {
       lastFollow = now;
