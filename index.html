@@ -3,8 +3,22 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Joyeux anniversaire Brigitte</title>
-<meta name="description" content="Une carte d'anniversaire pour Brigitte, 8 novembre.">
+<title>Ma princesse, j'ai quelque chose pour toi</title>
+<meta name="description" content="Ma princesse, j'ai quelque chose pour toi. Ta surprise s'ouvre le 8 novembre à minuit.">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="fr_FR">
+<meta property="og:site_name" content="Pour toi">
+<meta property="og:title" content="Ma princesse, j'ai quelque chose pour toi">
+<meta property="og:description" content="Une surprise t'attend. Elle s'ouvre le 8 novembre à minuit.">
+<meta property="og:url" content="https://bribri-wine.vercel.app/">
+<meta property="og:image" content="https://bribri-wine.vercel.app/photos/apercu.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Un coeur rose et les mots : Ma princesse, j'ai quelque chose pour toi">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Ma princesse, j'ai quelque chose pour toi">
+<meta name="twitter:description" content="Une surprise t'attend. Elle s'ouvre le 8 novembre à minuit.">
+<meta name="twitter:image" content="https://bribri-wine.vercel.app/photos/apercu.jpg">
 <meta name="robots" content="noindex, nofollow">
 <meta name="theme-color" content="#F8EFE6">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 92'><path d='M50,88 C50,88 4,58 4,30 C4,13 17,3 30,3 C40,3 46,10 50,17 C54,10 60,3 70,3 C83,3 96,13 96,30 C96,58 50,88 50,88 Z' fill='%23B5677A'/></svg>">
@@ -1366,10 +1380,47 @@
     .call { flex-basis: 240px; }
   }
 
-  /* grands ecrans : la galerie s'elargit, le reste reste centre */
+  /* ==== GRANDS ECRANS (ordinateur) ==== */
   @media (min-width: 1000px) {
-    .gallery.wrap { max-width: 960px; }
-    .grid { grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .wrap { max-width: 760px; }
+    .hero { padding-top: 84px; }
+    .hero__title { font-size: 76px; }
+    .hero__name { font-size: 40px; }
+    .hero__line { font-size: 26px; }
+    .heart { width: 340px; }
+
+    .note { max-width: 700px; padding: 46px 58px; }
+    .note p { font-size: 21px; }
+    .note .note__hello { font-size: 28px; }
+    .note .note__sign { font-size: 28px; }
+
+    .story.wrap {
+      max-width: 1040px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      column-gap: 80px;
+      align-items: start;
+    }
+    .story__head { grid-column: 1 / -1; }
+    .story__title { font-size: 46px; }
+    .story .timeline { grid-column: 1; grid-row: 2 / span 2; }
+    .story .together { grid-column: 2; grid-row: 2; margin-top: 8px; }
+    .story .distance { grid-column: 2; grid-row: 3; margin-top: 30px; }
+    .story .calls { grid-column: 1 / -1; margin-top: 70px; }
+    .tl__text { font-size: 20px; }
+    .together__days { font-size: 30px; }
+    .distance__text { font-size: 22px; }
+
+    .calls__track { flex-wrap: wrap; justify-content: center; overflow: visible; margin: 0; padding: 8px 0 20px; gap: 36px 28px; }
+    .call { flex: 0 0 210px; max-width: 210px; }
+    .calls__hint { display: none; }
+
+    .gallery.wrap { max-width: 1040px; }
+    .gallery__title { font-size: 32px; }
+    .grid { grid-template-columns: repeat(3, 1fr); gap: 18px; }
+
+    .outro__line { font-size: 34px; }
+    .outro__bm { font-size: 40px; }
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -3239,6 +3290,19 @@
 
   readBtn.hidden = false;
   start();
+
+  // ?carte : ouvre directement la carte (pour la tester, sans refaire tout le parcours)
+  if (params.has("carte")) {
+    window.clearInterval(countTimer);
+    Object.keys(scenes).forEach(function (k) { scenes[k].hidden = true; });
+    seal.hidden = true;
+    document.body.classList.remove("is-sealed");
+    document.body.classList.add("card-live");
+    opened = true;
+    watchReveals();
+    typeFinish();
+    Array.prototype.forEach.call(document.querySelectorAll(".reveal"), function (el) { el.classList.add("is-in"); });
+  }
 })();
 </script>
 
