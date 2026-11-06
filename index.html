@@ -1137,7 +1137,7 @@
   /* ---------------------------------------------------------------
      4. Les photos
      --------------------------------------------------------------- */
-  .gallery { margin: 56px 0 0; }
+  .gallery { margin: 56px auto 0; }
   .gallery__head {
     display: flex;
     align-items: baseline;
@@ -1364,6 +1364,12 @@
     .wrap { max-width: 620px; }
     .note { max-width: 560px; }
     .call { flex-basis: 240px; }
+  }
+
+  /* grands ecrans : la galerie s'elargit, le reste reste centre */
+  @media (min-width: 1000px) {
+    .gallery.wrap { max-width: 960px; }
+    .grid { grid-template-columns: repeat(3, 1fr); gap: 16px; }
   }
 
   @media (prefers-reduced-motion: reduce) {
