@@ -909,8 +909,8 @@
   .note__hint.is-on { opacity: 1; animation: pulse 2.4s ease-in-out infinite; }
 
   /* l'encre arrive rose puis fonce */
-  .note .ch { opacity: 0; color: var(--rose); transition: opacity 0.18s ease, color 1.4s ease; }
-  .note .ch.on { opacity: 1; color: inherit; }
+  .note .ch { opacity: 0; }
+  .note .ch.on { opacity: 1; transition: opacity 0.15s ease; }
 
   /* le stylo qui ecrit */
   .pen {
@@ -933,10 +933,9 @@
     height: 100%;
     overflow: visible;
     transform-origin: 41.7% 95.5%;
-    filter: drop-shadow(3px 7px 4px rgba(60, 20, 35, 0.28));
     transition: transform 0.15s ease;
   }
-  .pen.is-writing svg { animation: scribble 0.16s ease-in-out infinite alternate; }
+  .pen.is-writing svg { transform: rotate(-1deg); }
   .pen.is-lift svg { animation: none; transform: translate(2px, -7px) rotate(-5deg); }
   @keyframes scribble {
     from { transform: rotate(-3deg) translate(0, 0); }
@@ -1945,13 +1944,13 @@
   var fx = (function () {
     var cv = $("fx");
     var ctx = cv.getContext("2d");
-    var W = 0, H = 0, parts = [], running = false, last = 0, amb = false, butEl = null;
+    var W = 0, H = 0, parts = [], running = false, last = 0, amb = false, butEl = null, butRect = { top: 0, bottom: 0 };
     var HP = new Path2D("M50,88 C50,88 4,58 4,30 C4,13 17,3 30,3 C40,3 46,10 50,17 C54,10 60,3 70,3 C83,3 96,13 96,30 C96,58 50,88 50,88 Z");
     var CONF = ["#B5677A", "#D58A9B", "#E8B4BE", "#D9A55B", "#A0673F", "#6B4226", "#E3A3AF", "#E2B573"];
     var PINK = ["#B5677A", "#D58A9B", "#E8B4BE", "#7A3E4E", "#F1CDD2"];
 
     function size() {
-      var d = Math.min(2, window.devicePixelRatio || 1);
+      var d = Math.min(1.5, window.devicePixelRatio || 1);
       W = window.innerWidth; H = window.innerHeight;
       cv.width = Math.round(W * d); cv.height = Math.round(H * d);
       ctx.setTransform(d, 0, 0, d, 0, 0);
@@ -1988,7 +1987,7 @@
       if (p.k === "butt") {
         if (!butEl) { return true; }
         // ils voltigent dans la partie de la lettre visible a l'ecran
-        var r = butEl.getBoundingClientRect();
+        var r = butRect;
         var top = Math.max(r.top + 10, 30), bottom = Math.min(r.bottom - 10, H - 30);
         var span = bottom - top;
         p.hide = span < 90;
@@ -2014,6 +2013,7 @@
       var n = Math.max(1, Math.ceil(elapsed / 0.034));
       var dt = elapsed / n;
       ctx.clearRect(0, 0, W, H);
+      if (butEl) { butRect = butEl.getBoundingClientRect(); }
       for (var i = parts.length - 1; i >= 0; i--) {
         var p = parts[i], dead = false;
         for (var s = 0; s < n && !dead; s++) { dead = step(p, dt); }
@@ -2969,7 +2969,7 @@
     var cr = tip.getBoundingClientRect();
     var x = cr.right - nr.left - 40;
     var y = cr.top + cr.height * 0.72 - nr.top - 86;
-    pen.style.transform = "translate(" + x.toFixed(1) + "px," + y.toFixed(1) + "px)";
+    pen.style.transform = "translate3d(" + x.toFixed(1) + "px," + y.toFixed(1) + "px,0)";
     pen.classList.toggle("is-lift", !!lift);
   }
   function penAway() {
@@ -2977,7 +2977,7 @@
     $("noteFly").classList.add("is-drawn");
     pen.classList.remove("is-writing", "is-lift");
     if (!pen.classList.contains("is-on")) { return; }
-    var m = /translate\(([-\d.]+)px,([-\d.]+)px\)/.exec(pen.style.transform || "");
+    var m = /translate3d\(([-\d.]+)px,([-\d.]+)px/.exec(pen.style.transform || "");
     if (m) { pen.style.transform = "translate(" + (+m[1] + 60) + "px," + (+m[2] - 40) + "px) rotate(12deg)"; }
     pen.classList.add("is-leaving");
     pen.classList.remove("is-on");
@@ -3039,11 +3039,15 @@
   ["touchstart", "wheel", "keydown"].forEach(function (ev) {
     window.addEventListener(ev, function () { lastUserScroll = Date.now(); }, { passive: true });
   });
+  var lastFollow = 0;
   function followPen() {
-    if (Date.now() - lastUserScroll < 4000 || !tip) { return; }
+    var now = Date.now();
+    if (now - lastUserScroll < 4000 || now - lastFollow < 700 || !tip) { return; }
     var r = tip.getBoundingClientRect();
-    var limit = window.innerHeight * 0.7;
-    if (r.bottom > limit) { window.scrollBy({ top: r.bottom - window.innerHeight * 0.45, behavior: "smooth" }); }
+    if (r.bottom > window.innerHeight * 0.7) {
+      lastFollow = now;
+      window.scrollBy({ top: r.bottom - window.innerHeight * 0.45, behavior: "smooth" });
+    }
   }
   function watchNote() { if (noteWatcher) { noteWatcher.observe(note); } else { typeFinish(); } }
 
