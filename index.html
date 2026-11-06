@@ -296,7 +296,8 @@
   .quiz__fb { min-height: 2.8em; margin: 0; font-family: var(--hand); word-spacing: 0.28em; color: var(--rose-deep); line-height: 1.7; }
 
   /* mini-jeu */
-  .game__open { color: var(--rose-deep); background: var(--paper); box-shadow: inset 0 0 0 1.5px var(--line); }
+  .game__open { flex-direction: column; height: auto; padding: 12px 26px; gap: 2px; margin-top: -8px; }
+  .game__open small { font-size: 11px; font-weight: 400; opacity: 0.85; letter-spacing: 0.04em; }
   .game { position: fixed; inset: 0; z-index: 4; display: flex; flex-direction: column; background: var(--ground); touch-action: manipulation; }
   .game[hidden] { display: none; }
   .game__bar { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; font-size: 18px; color: var(--ink); }
@@ -1446,6 +1447,7 @@
       <div class="count__cell"><span class="count__num" id="cS">00</span><span class="count__lbl">sec</span></div>
     </div>
     <p class="seal__text">Ta surprise s'ouvre le 8 novembre à minuit, heure du Mali.</p>
+    <button class="btn game__open" id="gameOpen" type="button">Jouer en attendant<small>cœurs · étoiles du Mali · quiz</small></button>
     <p class="tease" id="tease" aria-live="polite"></p>
     <div class="secret" id="secret" aria-label="Un message se cache ici"></div>
     <p class="secret__cap" id="secretCap">Un message se cache ici. Il se dévoile avec le temps, et à chaque bisou ou jeu réussi.</p>
@@ -1471,7 +1473,6 @@
       </div>
     </div>
     <p class="count__tap" id="countTap">Touche le cœur pour un bisou</p>
-    <button class="btn btn--soft game__open" id="gameOpen" type="button">Jouer en attendant</button>
     <div class="game play" id="play" hidden>
       <div class="game__bar"><span>Jouer en attendant</span><button type="button" data-close="play" aria-label="Fermer">×</button></div>
       <div class="play__list">
