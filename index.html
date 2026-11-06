@@ -263,9 +263,6 @@
   .clock__lbl { font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-faint); text-align: left; }
   .clocks__link { width: 64px; height: 22px; flex: none; }
 
-  /* decor : Paris et Bamako */
-  .skyline { position: fixed; left: 50%; bottom: 0; z-index: -1; width: min(100%, 760px); transform: translateX(-50%); color: var(--rose-deep); opacity: 0.13; pointer-events: none; }
-
   /* mots caches */
   .secret { display: flex; flex-wrap: wrap; justify-content: center; gap: 2px 12px; max-width: 340px; margin-top: -6px; font-family: var(--hand); font-size: clamp(15px, 4.4vw, 19px); color: var(--rose-deep); }
   .secret .w { display: inline-flex; }
@@ -1438,23 +1435,6 @@
 
   <!-- 1a. Compte a rebours -->
   <div class="scene" id="sceneCount" hidden>
-    <svg class="skyline" viewBox="0 0 400 100" preserveAspectRatio="xMidYMax meet" aria-hidden="true">
-      <g fill="currentColor">
-        <!-- Paris : Notre-Dame, Tour Eiffel, Arc de Triomphe, Sacre-Coeur -->
-        <path d="M4,100V64h9v-4h2v4h2v-4h2v4h2v36h-3V72h-2v28h-2V72h-2v28zM21,100V64h9v-4h2v4h2v-4h2v4h2v36z"/>
-        <path d="M58,100L50,100L47,86L44,100L38,100L44.5,52L46.5,30L48.5,12L50.5,2L52,12L54,30L56.5,52Z" transform="translate(6 4)"/>
-        <rect x="50" y="54" width="14" height="2.2"/><rect x="52" y="35" width="10" height="1.8"/>
-        <path fill-rule="evenodd" d="M92,100V56h-3v-5h32v5h-3v44h-8V76q-5,-9 -10,0v24z"/>
-        <path d="M138,100V80q0,-6 5,-6t5,6v20zM152,100V70q0,-14 12,-18V44q1.5,-5 3,0v8q12,4 12,18v30zM181,100V80q0,-6 5,-6t5,6v20z"/>
-        <!-- Bamako : Grande Mosquee, Tour de l'Afrique, Monument, baobab -->
-        <path d="M216,100V50l3.5,-8l3.5,8v50zM226,100V70q10,-14 20,0v30zM249,100V50l3.5,-8l3.5,8v50z"/>
-        <path d="M284,100V30q0,-9 5.5,-12q5.5,3 5.5,12v70h-3V56h-5v44z"/>
-        <ellipse cx="289.5" cy="17" rx="8" ry="4"/><rect x="288.8" y="2" width="1.6" height="12"/>
-        <path d="M318,100V86h6V44l5,-14l5,14v42h6v14z"/><path d="M322,56h14v3h-14zM324,66h10v3h-10z" fill="#F8EFE6"/>
-        <path d="M366,100V80q-3,-3 -2,-8q-8,0 -9,-6q2,-5 9,-4q-2,-6 4,-8q4,-5 8,-1q7,-3 9,3q7,1 6,8q-6,0 -9,3q1,6 -3,8v26z"/>
-      </g>
-      <path d="M0,99.5H400" stroke="currentColor" stroke-width="1"/>
-    </svg>
     <button class="count__heart" id="countHeart" type="button" aria-label="Envoyer un bisou">
       <svg class="seal__heart" viewBox="0 0 100 92" aria-hidden="true"><use href="#heart-shape" fill="#B5677A"/></svg>
     </button>
