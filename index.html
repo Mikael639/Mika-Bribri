@@ -11,6 +11,15 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playwrite+FR+Trad&family=Rouge+Script&family=Inter:wght@400;500;600&display=swap">
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/",
+    "gsap": "https://cdn.jsdelivr.net/npm/gsap@3.12.5/index.js"
+  }
+}
+</script>
 <style>
   :root {
     --ground: #F8EFE6;
@@ -325,6 +334,31 @@
     bottom: 2%;
     height: 24%;
     background: radial-gradient(ellipse at center, rgba(90, 35, 50, 0.3), transparent 66%);
+  }
+
+  /* scene 3D Three.js (avec repli CSS/SVG automatique si absente) */
+  .scene--box.has-3d .box3d,
+  .scene--box.has-3d .gift::before {
+    display: none;
+  }
+  .scene--box.has-3d .gift {
+    animation: none !important;
+    perspective: none;
+    touch-action: manipulation;
+  }
+  .scene--box.has-3d.is-wish .gift,
+  .scene--box.has-3d.is-done .gift {
+    touch-action: none;
+  }
+  .gift-canvas {
+    position: absolute;
+    left: 50%;
+    top: 46%;
+    width: 176%;
+    height: 162%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    display: block;
   }
 
   /* la boite en vraie 3D, vue un peu d'en haut */
@@ -2066,6 +2100,7 @@
       box.classList.remove("enter");
       void box.offsetWidth;
       box.classList.add("enter");
+      if (window.GIFT3D && window.GIFT3D.active) { window.GIFT3D.onShow(); }
       later(function () { sfx.whoosh(); }, 0);
     }
   }
@@ -2077,6 +2112,7 @@
     sprinkles: 1.6, happy: 1.3, birthday: 1.85, name: 2.3,
     candle: 2.6, lit: 3.05, dark: 3.3, wish: 3.7
   };
+  window.ANNIV_CFG = { T: T, age: CONFIG.age, reduce: reduce };
 
   /* --- Les perles nacrees du gateau --- */
   function pearls(group, cy, from, to, n, full, startAt) {
@@ -2364,9 +2400,21 @@
   var flame = $("flame");
   var flameWind = $("flameWind");
   var opening = false;
+  var pDown = null, giftDragged = false;
+  gift.addEventListener("pointerdown", function (e) {
+    pDown = { x: e.clientX, y: e.clientY };
+    giftDragged = false;
+  });
+  window.addEventListener("pointermove", function (e) {
+    if (!pDown) { return; }
+    if (Math.hypot(e.clientX - pDown.x, e.clientY - pDown.y) > 7) { giftDragged = true; }
+  }, { passive: true });
+  window.addEventListener("pointerup", function () { pDown = null; }, { passive: true });
+  window.addEventListener("pointercancel", function () { pDown = null; }, { passive: true });
 
   // Un seul ecouteur pour toute la scene : ouvrir, accelerer, souffler.
   box.addEventListener("click", function (e) {
+    if (giftDragged) { giftDragged = false; return; }
     if (e.target.closest("button") && !e.target.closest("#gift")) { return; }
     if (box.classList.contains("is-wish")) { if (e.target.closest("#gift")) { blowOut(); } return; }
     if (box.classList.contains("is-done")) { showRead(); return; }
@@ -2380,6 +2428,7 @@
     startMusic();
     buzz(25);
     gift.classList.add("is-shake");
+    if (window.GIFT3D && window.GIFT3D.active) { window.GIFT3D.shake(); }
     later(openBox, 320);
   }
 
@@ -2391,6 +2440,7 @@
     sfx.whoosh();
     buzz([30, 60, 40]);
     writeCake(false);
+    if (window.GIFT3D && window.GIFT3D.active) { window.GIFT3D.open(); }
 
     later(function () { fx.cannons(0); sfx.pop(); later(sfx.pop, 120); }, 500);
     later(function () { fx.rain(34); }, 800);
@@ -2406,17 +2456,26 @@
   }
 
   function goDark() {
-    var c = center(flame);
+    if (window.GIFT3D && window.GIFT3D.active) { window.GIFT3D.goDark(); }
+    var c = (window.GIFT3D && window.GIFT3D.active) ? window.GIFT3D.flamePos() : center(flame);
     dim.style.setProperty("--cx", c.x + "px");
     dim.style.setProperty("--cy", c.y + "px");
     seal.classList.add("is-dark");
     volumeTo(CONFIG.volume * 0.35);
   }
+  window.addEventListener("resize", function () {
+    if (seal.classList.contains("is-dark")) {
+      var c = (window.GIFT3D && window.GIFT3D.active) ? window.GIFT3D.flamePos() : center(flame);
+      dim.style.setProperty("--cx", c.x + "px");
+      dim.style.setProperty("--cy", c.y + "px");
+    }
+  });
 
   function showWish() {
     wish.hidden = false;
     box.classList.add("is-wish");
     gift.setAttribute("aria-label", "Souffler la bougie");
+    if (window.GIFT3D && window.GIFT3D.active) { window.GIFT3D.enableControls(true); }
   }
 
   // Toucher pendant l'ouverture : tout se place d'un coup, direct au voeu
@@ -2426,6 +2485,7 @@
     box.classList.add("fast", "is-open", "is-candle", "is-lit");
     giftHint.hidden = true;
     writeCake(true);
+    if (window.GIFT3D && window.GIFT3D.active) { window.GIFT3D.skipToWish(); }
     window.requestAnimationFrame(function () {
       window.requestAnimationFrame(function () {
         box.classList.remove("fast");
@@ -2469,6 +2529,7 @@
         var lvl = Math.min(1, rms / CONFIG.seuilSouffle);
         meter.style.setProperty("--lvl", (lvl * 100).toFixed(0) + "%");
         flameWind.style.setProperty("--wind", (lvl * 28).toFixed(1) + "deg");
+        if (window.GIFT3D && window.GIFT3D.active) { window.GIFT3D.setWind(lvl); }
         hits = rms > CONFIG.seuilSouffle ? hits + 1 : Math.max(0, hits - 1);
         if (hits > 9) { blowOut(); return; }
         micRaf = window.requestAnimationFrame(listen);
@@ -2483,13 +2544,15 @@
     window.cancelAnimationFrame(micRaf);
     if (micStream) { micStream.getTracks().forEach(function (t) { t.stop(); }); micStream = null; }
     flameWind.style.removeProperty("--wind");
+    if (window.GIFT3D && window.GIFT3D.active) { window.GIFT3D.setWind(0); }
   }
 
   function blowOut() {
     if (!box.classList.contains("is-wish")) { return; }
     box.classList.remove("is-wish");
     stopMic();
-    var c = center(flame);
+    var c = (window.GIFT3D && window.GIFT3D.active) ? window.GIFT3D.flamePos() : center(flame);
+    if (window.GIFT3D && window.GIFT3D.active) { window.GIFT3D.blowOut(); }
     box.classList.add("is-blown");
     sfx.blow();
     fx.smoke(c.x, c.y - 6);
@@ -2498,10 +2561,11 @@
 
     later(function () {
       seal.classList.remove("is-dark");
+      if (window.GIFT3D && window.GIFT3D.active) { window.GIFT3D.restoreLight(); }
       box.classList.add("is-done");
       final.hidden = false;
       volumeTo(CONFIG.volume);
-      var k = center($("cake"));
+      var k = (window.GIFT3D && window.GIFT3D.active) ? window.GIFT3D.cakePos() : center($("cake"));
       fx.explode(k.x, k.y - 30);
       fx.cannons(0.25);
       sfx.pop(); sfx.tada();
@@ -2540,6 +2604,7 @@
     document.body.classList.add("card-live");
     iris(function () {
       seal.hidden = true;
+      if (window.GIFT3D && window.GIFT3D.active) { window.GIFT3D.stop(); }
       document.body.classList.remove("is-sealed");
       watchReveals();
       watchNote();
@@ -2901,6 +2966,7 @@
     opened = false;
     box.classList.remove("is-open", "is-candle", "is-lit", "is-wish", "is-blown", "is-done", "fast");
     unwriteCake();
+    if (window.GIFT3D && window.GIFT3D.active) { window.GIFT3D.reset(); }
     gift.classList.remove("is-shake");
     gift.setAttribute("aria-label", "Ouvrir la boîte cadeau");
     seal.classList.remove("is-dark");
@@ -2930,6 +2996,1161 @@
 
   readBtn.hidden = false;
   start();
+})();
+</script>
+
+<script type="module">
+import * as THREE from "three";
+import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import gsap from "gsap";
+
+(function initGift3D() {
+  var params = new URLSearchParams(window.location.search);
+  if (params.has("repli") || params.has("nowebgl")) { return; }
+
+  var sceneBox = document.getElementById("sceneBox");
+  var giftBtn = document.getElementById("gift");
+  if (!sceneBox || !giftBtn) { return; }
+
+  var cfg = window.ANNIV_CFG || {
+    T: { pearlsBottom: 0.9, pearlsTop: 1.15, pearlStep: 0.022, sprinkles: 1.6, happy: 1.3, birthday: 1.85, name: 2.3, candle: 2.6, lit: 3.05, dark: 3.3, wish: 3.7 },
+    age: "20",
+    reduce: window.matchMedia("(prefers-reduced-motion: reduce)").matches
+  };
+  var T = cfg.T;
+  var reduce = cfg.reduce;
+
+  // Test et creation du renderer WebGL (repli automatique sur CSS/SVG en cas d'echec)
+  var canvas = document.createElement("canvas");
+  canvas.className = "gift-canvas";
+  canvas.setAttribute("aria-hidden", "true");
+  var renderer;
+  try {
+    renderer = new THREE.WebGLRenderer({
+      canvas: canvas,
+      alpha: true,
+      antialias: true,
+      powerPreference: "high-performance"
+    });
+  } catch (err) {
+    return;
+  }
+
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.06;
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+  giftBtn.appendChild(canvas);
+  sceneBox.classList.add("has-3d");
+
+  var scene = new THREE.Scene();
+  var camera = new THREE.PerspectiveCamera(34, 1, 0.1, 30);
+  camera.position.set(0, 2.65, 4.95);
+  camera.lookAt(0, 0.08, 0);
+
+  // OrbitControls : rotation horizontale douce au doigt, sans zoom ni pan
+  var controls = new OrbitControls(camera, giftBtn);
+  controls.enableDamping = true;
+  controls.dampingFactor = 0.08;
+  controls.enableZoom = false;
+  controls.enablePan = false;
+  controls.rotateSpeed = 0.75;
+  controls.target.set(0, 0.08, 0);
+  var basePolar = camera.position.clone().sub(controls.target);
+  var polarAngle = Math.acos(basePolar.y / basePolar.length());
+  controls.minPolarAngle = polarAngle - 0.08;
+  controls.maxPolarAngle = polarAngle + 0.10;
+  controls.enabled = false;
+
+  /* ------------------------------------------------------------------
+     LUMIERES
+     ------------------------------------------------------------------ */
+  var ambLight = new THREE.AmbientLight(0xfff5ee, 1.55);
+  scene.add(ambLight);
+
+  var hemiLight = new THREE.HemisphereLight(0xfff8f4, 0xd8b8c4, 0.75);
+  scene.add(hemiLight);
+
+  var dirLight = new THREE.DirectionalLight(0xfffaf5, 1.45);
+  dirLight.position.set(2.4, 5.2, 3.6);
+  dirLight.castShadow = true;
+  dirLight.shadow.mapSize.set(512, 512);
+  dirLight.shadow.camera.near = 1;
+  dirLight.shadow.camera.far = 12;
+  var sc = 2.2;
+  dirLight.shadow.camera.left = -sc;
+  dirLight.shadow.camera.right = sc;
+  dirLight.shadow.camera.top = sc;
+  dirLight.shadow.camera.bottom = -sc;
+  dirLight.shadow.bias = -0.0015;
+  scene.add(dirLight);
+
+  var fillLight = new THREE.DirectionalLight(0xffd6e6, 0.55);
+  fillLight.position.set(-2.8, 2.0, 2.2);
+  scene.add(fillLight);
+
+  /* ------------------------------------------------------------------
+     TEXTURES PROCEDURALES (Canvas 2D)
+     ------------------------------------------------------------------ */
+  function makeDotsTexture() {
+    var c = document.createElement("canvas");
+    c.width = 512; c.height = 512;
+    var ctx = c.getContext("2d");
+    ctx.fillStyle = "#FCFBFC";
+    ctx.fillRect(0, 0, 512, 512);
+
+    // leger degrade chaud en bas comme sur la boite CSS
+    var grad = ctx.createLinearGradient(0, 0, 0, 512);
+    grad.addColorStop(0, "rgba(255,255,255,0.4)");
+    grad.addColorStop(0.75, "rgba(248,239,230,0)");
+    grad.addColorStop(1, "rgba(90,35,55,0.08)");
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, 512, 512);
+
+    var patterns = [
+      { color: "#D58A9B", r: 3.4, sx: 96,  sy: 104, ox: 12, oy: 18 },
+      { color: "#D9A55B", r: 3.2, sx: 112, sy: 84,  ox: 52, oy: 8 },
+      { color: "#A0673F", r: 3.2, sx: 84,  sy: 118, ox: 28, oy: 62 },
+      { color: "#6B4226", r: 3.0, sx: 128, sy: 96,  ox: 70, oy: 40 }
+    ];
+    patterns.forEach(function (p) {
+      ctx.fillStyle = p.color;
+      for (var y = p.oy; y < 512; y += p.sy) {
+        for (var x = p.ox; x < 512; x += p.sx) {
+          ctx.beginPath();
+          ctx.arc(x, y, p.r, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+    });
+
+    var tex = new THREE.CanvasTexture(c);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    tex.wrapS = THREE.RepeatWrapping;
+    tex.wrapT = THREE.RepeatWrapping;
+    return tex;
+  }
+
+  function makeShadowTexture() {
+    var c = document.createElement("canvas");
+    c.width = 256; c.height = 256;
+    var ctx = c.getContext("2d");
+    var g = ctx.createRadialGradient(128, 128, 12, 128, 128, 120);
+    g.addColorStop(0, "rgba(90, 35, 50, 0.34)");
+    g.addColorStop(0.55, "rgba(90, 35, 50, 0.14)");
+    g.addColorStop(1, "rgba(90, 35, 50, 0)");
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, 256, 256);
+    var tex = new THREE.CanvasTexture(c);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    return tex;
+  }
+
+  function makeCakeSideTexture() {
+    var c = document.createElement("canvas");
+    c.width = 512; c.height = 256;
+    var ctx = c.getContext("2d");
+    var hg = ctx.createLinearGradient(0, 0, 512, 0);
+    hg.addColorStop(0.00, "#C24F7A");
+    hg.addColorStop(0.14, "#E27BA5");
+    hg.addColorStop(0.34, "#F9B8D2");
+    hg.addColorStop(0.46, "#FDCBDE");
+    hg.addColorStop(0.64, "#F3A2C2");
+    hg.addColorStop(0.86, "#D96896");
+    hg.addColorStop(1.00, "#C24F7A");
+    ctx.fillStyle = hg;
+    ctx.fillRect(0, 0, 512, 256);
+
+    var vg = ctx.createLinearGradient(0, 0, 0, 256);
+    vg.addColorStop(0.0, "rgba(142, 35, 80, 0.34)");
+    vg.addColorStop(0.24, "rgba(142, 35, 80, 0)");
+    vg.addColorStop(0.78, "rgba(142, 35, 80, 0)");
+    vg.addColorStop(1.0, "rgba(142, 35, 80, 0.22)");
+    ctx.fillStyle = vg;
+    ctx.fillRect(0, 0, 512, 256);
+
+    var tex = new THREE.CanvasTexture(c);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    return tex;
+  }
+
+  function makeCakeTopTexture() {
+    var c = document.createElement("canvas");
+    c.width = 512; c.height = 512;
+    var ctx = c.getContext("2d");
+    var rg = ctx.createRadialGradient(215, 190, 10, 256, 256, 260);
+    rg.addColorStop(0, "#FFE0EC");
+    rg.addColorStop(0.6, "#F9BCD4");
+    rg.addColorStop(1, "#EC97BA");
+    ctx.fillStyle = rg;
+    ctx.fillRect(0, 0, 512, 512);
+
+    ctx.strokeStyle = "rgba(201, 86, 127, 0.34)";
+    ctx.lineWidth = 6;
+    ctx.beginPath();
+    ctx.arc(256, 256, 232, 0, Math.PI * 2);
+    ctx.stroke();
+
+    var tex = new THREE.CanvasTexture(c);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    return tex;
+  }
+
+  function makeStripeTexture() {
+    var c = document.createElement("canvas");
+    c.width = 256; c.height = 256;
+    var ctx = c.getContext("2d");
+    ctx.fillStyle = "#FFF7FA";
+    ctx.fillRect(0, 0, 256, 256);
+    ctx.save();
+    ctx.translate(128, 128);
+    ctx.rotate(35 * Math.PI / 180);
+    ctx.fillStyle = "#E8B4BE";
+    for (var x = -260; x < 260; x += 36) {
+      ctx.fillRect(x, -260, 18, 520);
+    }
+    ctx.restore();
+    var tex = new THREE.CanvasTexture(c);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    tex.wrapS = THREE.RepeatWrapping;
+    tex.wrapT = THREE.RepeatWrapping;
+    tex.repeat.set(1.6, 1.6);
+    return tex;
+  }
+
+  function makeGlowTexture(c0, c1) {
+    var c = document.createElement("canvas");
+    c.width = 128; c.height = 128;
+    var ctx = c.getContext("2d");
+    var g = ctx.createRadialGradient(64, 64, 2, 64, 64, 62);
+    g.addColorStop(0, c0);
+    g.addColorStop(0.45, c1);
+    g.addColorStop(1, "rgba(255, 181, 71, 0)");
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, 128, 128);
+    var tex = new THREE.CanvasTexture(c);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    return tex;
+  }
+
+  /* ------------------------------------------------------------------
+     1. LA BOITE CADEAU + COEUR COUPE EN DEUX SUR LES DEUX RABATS
+     ------------------------------------------------------------------ */
+  var boxGroup = new THREE.Group();
+  var BOX_Y_CLOSED = -0.34;
+  var BOX_Y_OPEN = -0.82;
+  boxGroup.position.set(0, BOX_Y_CLOSED, 0);
+  scene.add(boxGroup);
+
+  var boxW = 1.72, boxH = 1.20, boxD = 1.38, wallT = 0.036;
+  var dotsTex = makeDotsTexture();
+  var outerMat = new THREE.MeshStandardMaterial({
+    map: dotsTex,
+    roughness: 0.62,
+    metalness: 0.02
+  });
+  var innerMat = new THREE.MeshStandardMaterial({
+    color: 0xe6d7df,
+    roughness: 0.75,
+    metalness: 0.0
+  });
+  var sideOuterMat = new THREE.MeshStandardMaterial({
+    map: dotsTex,
+    color: 0xf7eff3,
+    roughness: 0.65,
+    metalness: 0.02
+  });
+
+  // Ombre douce au sol
+  var groundShadow = new THREE.Mesh(
+    new THREE.PlaneGeometry(boxW * 1.48, boxD * 1.48),
+    new THREE.MeshBasicMaterial({ map: makeShadowTexture(), transparent: true, depthWrite: false })
+  );
+  groundShadow.rotation.x = -Math.PI / 2;
+  groundShadow.position.y = -boxH / 2 - 0.02;
+  boxGroup.add(groundShadow);
+
+  // Parois de la boite (exterieur a pois + interieur rose poudre)
+  function addWall(w, h, d, x, y, z, matOut) {
+    var mats = [matOut, matOut, innerMat, matOut, matOut, innerMat];
+    var m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mats);
+    m.position.set(x, y, z);
+    m.castShadow = true;
+    m.receiveShadow = true;
+    boxGroup.add(m);
+    return m;
+  }
+  // Face avant, face arriere, cote gauche, cote droit, fond
+  addWall(boxW, boxH, wallT, 0, 0, boxD / 2 - wallT / 2, outerMat);
+  addWall(boxW, boxH, wallT, 0, 0, -boxD / 2 + wallT / 2, sideOuterMat);
+  addWall(wallT, boxH, boxD - wallT * 2, -boxW / 2 + wallT / 2, 0, 0, sideOuterMat);
+  addWall(wallT, boxH, boxD - wallT * 2, boxW / 2 - wallT / 2, 0, 0, sideOuterMat);
+  var bottomMesh = new THREE.Mesh(new THREE.BoxGeometry(boxW, wallT, boxD), innerMat);
+  bottomMesh.position.set(0, -boxH / 2 + wallT / 2, 0);
+  bottomMesh.receiveShadow = true;
+  boxGroup.add(bottomMesh);
+
+  // Deux rabats du couvercle
+  var flapL = new THREE.Group();
+  flapL.position.set(-boxW / 2, boxH / 2, 0);
+  boxGroup.add(flapL);
+
+  var flapR = new THREE.Group();
+  flapR.position.set(boxW / 2, boxH / 2, 0);
+  boxGroup.add(flapR);
+
+  var flapMats = [sideOuterMat, sideOuterMat, outerMat, innerMat, sideOuterMat, sideOuterMat];
+  var flapGeo = new THREE.BoxGeometry(boxW / 2 - 0.004, wallT, boxD);
+
+  var flapMeshL = new THREE.Mesh(flapGeo, flapMats);
+  flapMeshL.position.set(boxW / 4, 0, 0);
+  flapMeshL.castShadow = true;
+  flapMeshL.receiveShadow = true;
+  flapL.add(flapMeshL);
+
+  var flapMeshR = new THREE.Mesh(flapGeo, flapMats);
+  flapMeshR.position.set(-boxW / 4, 0, 0);
+  flapMeshR.castShadow = true;
+  flapMeshR.receiveShadow = true;
+  flapR.add(flapMeshR);
+
+  // Coeur rose poudre (#E8B4BE) coupe en deux au milieu des rabats
+  var hs = 0.0112;
+  function sx(x) { return (x - 50) * hs; }
+  function sy(y) { return (46 - y) * hs; }
+
+  var heartShapeL = new THREE.Shape();
+  heartShapeL.moveTo(sx(50), sy(17));
+  heartShapeL.bezierCurveTo(sx(46), sy(10), sx(40), sy(3), sx(30), sy(3));
+  heartShapeL.bezierCurveTo(sx(17), sy(3), sx(4), sy(13), sx(4), sy(30));
+  heartShapeL.bezierCurveTo(sx(4), sy(58), sx(50), sy(88), sx(50), sy(88));
+  heartShapeL.lineTo(sx(50), sy(17));
+
+  var heartShapeR = new THREE.Shape();
+  heartShapeR.moveTo(sx(50), sy(17));
+  heartShapeR.bezierCurveTo(sx(54), sy(10), sx(60), sy(3), sx(70), sy(3));
+  heartShapeR.bezierCurveTo(sx(83), sy(3), sx(96), sy(13), sx(96), sy(30));
+  heartShapeR.bezierCurveTo(sx(96), sy(58), sx(50), sy(88), sx(50), sy(88));
+  heartShapeR.lineTo(sx(50), sy(17));
+
+  var heartExtrude = {
+    depth: 0.028,
+    curveSegments: 24,
+    bevelEnabled: true,
+    bevelThickness: 0.009,
+    bevelSize: 0.008,
+    bevelSegments: 3
+  };
+  var heartMat = new THREE.MeshStandardMaterial({
+    color: 0xe8b4be,
+    emissive: 0xe85d9a,
+    emissiveIntensity: 0.18,
+    roughness: 0.35,
+    metalness: 0.05
+  });
+
+  var heartMeshL = new THREE.Mesh(new THREE.ExtrudeGeometry(heartShapeL, heartExtrude), heartMat);
+  heartMeshL.rotation.x = -Math.PI / 2;
+  heartMeshL.position.set(boxW / 2 - 0.003, wallT / 2 + 0.002, 0);
+  flapL.add(heartMeshL);
+
+  var heartMeshR = new THREE.Mesh(new THREE.ExtrudeGeometry(heartShapeR, heartExtrude), heartMat);
+  heartMeshR.rotation.x = -Math.PI / 2;
+  heartMeshR.position.set(-boxW / 2 + 0.003, wallT / 2 + 0.002, 0);
+  flapR.add(heartMeshR);
+
+  // Halo doux sous le coeur (pulse avant ouverture)
+  var heartGlowMat = new THREE.MeshBasicMaterial({
+    map: makeGlowTexture("rgba(232, 93, 154, 0.55)", "rgba(232, 180, 190, 0.18)"),
+    transparent: true,
+    depthWrite: false,
+    opacity: 0.45
+  });
+  var heartGlowL = new THREE.Mesh(new THREE.PlaneGeometry(1.35, 1.35), heartGlowMat);
+  heartGlowL.rotation.x = -Math.PI / 2;
+  heartGlowL.position.set(boxW / 2, wallT / 2 + 0.001, 0);
+  flapL.add(heartGlowL);
+
+  /* ------------------------------------------------------------------
+     2. LE GATEAU, SES PERLES, SES NOEUDS, VERMICELLES & TEXTES
+     ------------------------------------------------------------------ */
+  var cakeGroup = new THREE.Group();
+  var CAKE_Y_HIDDEN = -0.46;
+  var CAKE_Y_OPEN = 0.18;
+  cakeGroup.position.set(0, CAKE_Y_HIDDEN, 0);
+  cakeGroup.scale.setScalar(0.46);
+  cakeGroup.visible = false;
+  scene.add(cakeGroup);
+
+  var cakeR = 0.74, cakeH = 0.68;
+
+  // Assiette blanche
+  var plateGroup = new THREE.Group();
+  plateGroup.position.y = -cakeH / 2 - 0.03;
+  cakeGroup.add(plateGroup);
+
+  var plateMat = new THREE.MeshStandardMaterial({
+    color: 0xffffff,
+    roughness: 0.22,
+    metalness: 0.04
+  });
+  var plateBase = new THREE.Mesh(new THREE.CylinderGeometry(0.95, 0.80, 0.055, 48), plateMat);
+  plateBase.castShadow = true;
+  plateBase.receiveShadow = true;
+  plateGroup.add(plateBase);
+
+  var plateRim = new THREE.Mesh(
+    new THREE.TorusGeometry(0.92, 0.026, 12, 48),
+    new THREE.MeshStandardMaterial({ color: 0xf3eaee, roughness: 0.25, metalness: 0.05 })
+  );
+  plateRim.rotation.x = Math.PI / 2;
+  plateRim.position.y = 0.022;
+  plateGroup.add(plateRim);
+
+  // Corps cylindrique du gateau
+  var cakeSideMesh = new THREE.Mesh(
+    new THREE.CylinderGeometry(cakeR, cakeR, cakeH, 64, 1, true),
+    new THREE.MeshStandardMaterial({
+      map: makeCakeSideTexture(),
+      roughness: 0.44,
+      metalness: 0.02
+    })
+  );
+  cakeSideMesh.rotation.y = -Math.PI / 2;
+  cakeSideMesh.castShadow = true;
+  cakeSideMesh.receiveShadow = true;
+  cakeGroup.add(cakeSideMesh);
+
+  // Dessus et dessous du cylindre
+  var cakeTopMesh = new THREE.Mesh(
+    new THREE.CircleGeometry(cakeR, 64),
+    new THREE.MeshStandardMaterial({
+      map: makeCakeTopTexture(),
+      roughness: 0.38,
+      metalness: 0.02
+    })
+  );
+  cakeTopMesh.rotation.x = -Math.PI / 2;
+  cakeTopMesh.position.y = cakeH / 2;
+  cakeTopMesh.receiveShadow = true;
+  cakeGroup.add(cakeTopMesh);
+
+  var cakeBottomCap = new THREE.Mesh(
+    new THREE.CircleGeometry(cakeR, 32),
+    new THREE.MeshStandardMaterial({ color: 0xbb4772, roughness: 0.6 })
+  );
+  cakeBottomCap.rotation.x = Math.PI / 2;
+  cakeBottomCap.position.y = -cakeH / 2;
+  cakeGroup.add(cakeBottomCap);
+
+  // Couronnes de perles nacrees (14 en bas devant, 26 en haut tout autour)
+  var pearlMat = new THREE.MeshPhysicalMaterial({
+    color: 0xffffff,
+    emissive: 0x6b2844,
+    emissiveIntensity: 0.08,
+    roughness: 0.14,
+    metalness: 0.06,
+    clearcoat: 1.0,
+    clearcoatRoughness: 0.08
+  });
+  var pearlGeo = new THREE.SphereGeometry(0.052, 18, 14);
+  var pearlsBottom = [];
+  var pearlsTop = [];
+
+  for (var bi = 0; bi < 14; bi++) {
+    var bt = -0.45 * Math.PI + (0.90 * Math.PI) * (bi / 13);
+    var bp = new THREE.Mesh(pearlGeo, pearlMat);
+    bp.position.set(
+      (cakeR + 0.028) * Math.sin(bt),
+      -cakeH / 2 + 0.036,
+      (cakeR + 0.028) * Math.cos(bt)
+    );
+    bp.scale.setScalar(0);
+    cakeGroup.add(bp);
+    pearlsBottom.push(bp);
+  }
+
+  for (var ti = 0; ti < 26; ti++) {
+    var tt = (ti / 26) * Math.PI * 2;
+    var tp = new THREE.Mesh(pearlGeo, pearlMat);
+    tp.position.set(
+      (cakeR - 0.022) * Math.sin(tt),
+      cakeH / 2 + 0.026,
+      (cakeR - 0.022) * Math.cos(tt)
+    );
+    tp.scale.setScalar(0);
+    cakeGroup.add(tp);
+    pearlsTop.push(tp);
+  }
+
+  // 3 noeuds bordeaux sur le cote du gateau
+  var bowMainMat = new THREE.MeshStandardMaterial({ color: 0xb0245a, roughness: 0.35, metalness: 0.05 });
+  var bowFillMat = new THREE.MeshStandardMaterial({ color: 0xe2558a, roughness: 0.4, metalness: 0.04 });
+
+  function createBow() {
+    var g = new THREE.Group();
+    var knot = new THREE.Mesh(new THREE.SphereGeometry(0.032, 14, 12), bowMainMat);
+    knot.scale.set(1, 0.9, 0.7);
+    g.add(knot);
+
+    [-1, 1].forEach(function (dir) {
+      var loop = new THREE.Mesh(new THREE.TorusGeometry(0.058, 0.018, 10, 24), bowMainMat);
+      loop.scale.set(1.25, 0.78, 0.55);
+      loop.position.set(dir * 0.068, 0.01, -0.005);
+      loop.rotation.z = dir * -0.22;
+      loop.rotation.y = dir * -0.18;
+      g.add(loop);
+
+      var inner = new THREE.Mesh(new THREE.CircleGeometry(0.046, 16), bowFillMat);
+      inner.scale.set(1.2, 0.72, 1);
+      inner.position.set(dir * 0.068, 0.01, -0.004);
+      inner.rotation.z = dir * -0.22;
+      g.add(inner);
+
+      var tail = new THREE.Mesh(new THREE.CapsuleGeometry(0.013, 0.085, 4, 8), bowMainMat);
+      tail.position.set(dir * 0.038, -0.062, -0.006);
+      tail.rotation.z = dir * 0.46;
+      g.add(tail);
+    });
+    return g;
+  }
+
+  var bowSpecs = [
+    { ang: -0.66, y: 0.06 },
+    { ang: 0.0,   y: 0.03 },
+    { ang: 0.66,  y: 0.06 }
+  ];
+  bowSpecs.forEach(function (bs) {
+    var b = createBow();
+    var r = cakeR + 0.016;
+    b.position.set(r * Math.sin(bs.ang), bs.y, r * Math.cos(bs.ang));
+    b.rotation.y = bs.ang;
+    cakeGroup.add(b);
+  });
+
+  // 8 petits vermicelles colores sur le dessus
+  var sprSpecs = [
+    { x: -0.44, z: -0.12, rot: -0.4,  c: 0xd9a55b },
+    { x:  0.44, z: -0.14, rot:  0.6,  c: 0xa0673f },
+    { x: -0.36, z:  0.26, rot:  0.45, c: 0x6b4226 },
+    { x:  0.35, z:  0.26, rot: -0.25, c: 0xd9a55b },
+    { x: -0.20, z: -0.34, rot:  0.75, c: 0xd58a9b },
+    { x:  0.24, z: -0.36, rot: -0.45, c: 0x6b4226 },
+    { x: -0.50, z:  0.10, rot:  1.1,  c: 0xa0673f },
+    { x:  0.51, z:  0.10, rot: -1.1,  c: 0xd58a9b }
+  ];
+  var sprinkles = [];
+  var sprGeo = new THREE.CapsuleGeometry(0.016, 0.055, 6, 8);
+  sprSpecs.forEach(function (sp) {
+    var m = new THREE.Mesh(
+      sprGeo,
+      new THREE.MeshStandardMaterial({ color: sp.c, roughness: 0.35 })
+    );
+    m.position.set(sp.x, cakeH / 2 + 0.012, sp.z);
+    m.rotation.x = Math.PI / 2;
+    m.rotation.z = sp.rot;
+    m.scale.setScalar(0);
+    cakeGroup.add(m);
+    sprinkles.push(m);
+  });
+
+  // Textes progressifs : "Happy Birthday" sur le dessus et "Mon amour" sur le cote
+  var writeState = { happy: 0, birthday: 0, name: 0 };
+
+  var topTextCanvas = document.createElement("canvas");
+  topTextCanvas.width = 512; topTextCanvas.height = 512;
+  var topTextCtx = topTextCanvas.getContext("2d");
+  var topTextTex = new THREE.CanvasTexture(topTextCanvas);
+  topTextTex.colorSpace = THREE.SRGBColorSpace;
+
+  var topTextMesh = new THREE.Mesh(
+    new THREE.PlaneGeometry(cakeR * 1.65, cakeR * 1.65),
+    new THREE.MeshBasicMaterial({ map: topTextTex, transparent: true, depthWrite: false })
+  );
+  topTextMesh.rotation.x = -Math.PI / 2;
+  topTextMesh.rotation.z = 6 * Math.PI / 180;
+  topTextMesh.position.y = cakeH / 2 + 0.003;
+  cakeGroup.add(topTextMesh);
+
+  var sideTextCanvas = document.createElement("canvas");
+  sideTextCanvas.width = 512; sideTextCanvas.height = 160;
+  var sideTextCtx = sideTextCanvas.getContext("2d");
+  var sideTextTex = new THREE.CanvasTexture(sideTextCanvas);
+  sideTextTex.colorSpace = THREE.SRGBColorSpace;
+
+  var sideArc = 1.18;
+  var sideTextMesh = new THREE.Mesh(
+    new THREE.CylinderGeometry(cakeR + 0.005, cakeR + 0.005, 0.25, 48, 1, true, -sideArc / 2, sideArc),
+    new THREE.MeshBasicMaterial({ map: sideTextTex, transparent: true, depthWrite: false })
+  );
+  sideTextMesh.position.y = -0.15;
+  cakeGroup.add(sideTextMesh);
+
+  function updateCakeTexts() {
+    // Dessus : "Happy" et "Birthday" (places au centre/avant pour ne pas etre caches par la bougie "20")
+    topTextCtx.clearRect(0, 0, 512, 512);
+    topTextCtx.font = "400 84px 'Rouge Script', 'Segoe Script', cursive";
+    topTextCtx.textAlign = "center";
+    topTextCtx.textBaseline = "middle";
+    topTextCtx.fillStyle = "#7A3E4E";
+
+    if (writeState.happy > 0.001) {
+      topTextCtx.save();
+      topTextCtx.beginPath();
+      topTextCtx.rect(70, 210, 372 * writeState.happy, 115);
+      topTextCtx.clip();
+      topTextCtx.fillText("Happy", 256, 272);
+      topTextCtx.restore();
+    }
+    if (writeState.birthday > 0.001) {
+      topTextCtx.save();
+      topTextCtx.beginPath();
+      topTextCtx.rect(45, 305, 422 * writeState.birthday, 130);
+      topTextCtx.clip();
+      topTextCtx.font = "400 78px 'Rouge Script', 'Segoe Script', cursive";
+      topTextCtx.fillText("Birthday", 256, 362);
+      topTextCtx.restore();
+    }
+    topTextTex.needsUpdate = true;
+
+    // Cote : "Mon amour"
+    sideTextCtx.clearRect(0, 0, 512, 160);
+    if (writeState.name > 0.001) {
+      sideTextCtx.save();
+      sideTextCtx.beginPath();
+      sideTextCtx.rect(24, 0, 464 * writeState.name, 160);
+      sideTextCtx.clip();
+      sideTextCtx.font = "400 92px 'Rouge Script', 'Segoe Script', cursive";
+      sideTextCtx.textAlign = "center";
+      sideTextCtx.textBaseline = "middle";
+      sideTextCtx.lineJoin = "round";
+      sideTextCtx.lineCap = "round";
+      sideTextCtx.strokeStyle = "#B0245A";
+      sideTextCtx.lineWidth = 6;
+      sideTextCtx.strokeText("Mon amour", 256, 86);
+      sideTextCtx.fillStyle = "#FFFFFF";
+      sideTextCtx.fillText("Mon amour", 256, 86);
+      sideTextCtx.restore();
+    }
+    sideTextTex.needsUpdate = true;
+  }
+
+  if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(function () { updateCakeTexts(); });
+  }
+
+  /* ------------------------------------------------------------------
+     3. LA BOUGIE EN FORME DE "20" + FLAMME ANIMEE + POINTLIGHT CHAUDE
+     ------------------------------------------------------------------ */
+  var candleGroup = new THREE.Group();
+  var CANDLE_Y_REST = cakeH / 2;
+  var CANDLE_Y_START = cakeH / 2 + 0.65;
+  var CANDLE_Z = -0.14;
+  candleGroup.position.set(0, CANDLE_Y_START, CANDLE_Z);
+  candleGroup.visible = false;
+  cakeGroup.add(candleGroup);
+
+  var stripeTex = makeStripeTexture();
+  var candleFrontMat = new THREE.MeshStandardMaterial({
+    map: stripeTex,
+    roughness: 0.32,
+    metalness: 0.04
+  });
+  var candleSideMat = new THREE.MeshStandardMaterial({
+    color: 0xd97ca3,
+    roughness: 0.38,
+    metalness: 0.05
+  });
+
+  // Transforme une courbe centrale 2D en THREE.Shape epaisse a bords arrondis
+  function strokeCurveToShape(pts, halfW) {
+    var left = [], right = [];
+    for (var i = 0; i < pts.length; i++) {
+      var pPrev = pts[Math.max(0, i - 1)];
+      var pNext = pts[Math.min(pts.length - 1, i + 1)];
+      var dx = pNext.x - pPrev.x, dy = pNext.y - pPrev.y;
+      var len = Math.hypot(dx, dy) || 1;
+      var nx = -dy / len, ny = dx / len;
+      left.push(new THREE.Vector2(pts[i].x + nx * halfW, pts[i].y + ny * halfW));
+      right.push(new THREE.Vector2(pts[i].x - nx * halfW, pts[i].y - ny * halfW));
+    }
+    var shape = new THREE.Shape();
+    shape.moveTo(left[0].x, left[0].y);
+    for (var j = 1; j < left.length; j++) { shape.lineTo(left[j].x, left[j].y); }
+    for (var k = right.length - 1; k >= 0; k--) { shape.lineTo(right[k].x, right[k].y); }
+    shape.closePath();
+    return shape;
+  }
+
+  function buildNumber20Candle() {
+    var holder = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.028, 0.024, 0.11, 14),
+      new THREE.MeshStandardMaterial({ color: 0xe8b4be, roughness: 0.4 })
+    );
+    holder.position.y = 0.05;
+    candleGroup.add(holder);
+
+    // Chiffre "2"
+    var curve2 = new THREE.CurvePath();
+    curve2.add(new THREE.CubicBezierCurve(
+      new THREE.Vector2(-0.12, 0.29),
+      new THREE.Vector2(-0.12, 0.40),
+      new THREE.Vector2(0.12, 0.40),
+      new THREE.Vector2(0.11, 0.27)
+    ));
+    curve2.add(new THREE.CubicBezierCurve(
+      new THREE.Vector2(0.11, 0.27),
+      new THREE.Vector2(0.10, 0.19),
+      new THREE.Vector2(-0.04, 0.11),
+      new THREE.Vector2(-0.12, 0.03)
+    ));
+    curve2.add(new THREE.LineCurve(
+      new THREE.Vector2(-0.12, 0.03),
+      new THREE.Vector2(0.13, 0.03)
+    ));
+    var shape2 = strokeCurveToShape(curve2.getPoints(36), 0.042);
+
+    // Chiffre "0"
+    var shape0 = new THREE.Shape();
+    shape0.absellipse(0, 0.20, 0.135, 0.195, 0, Math.PI * 2, false, 0);
+    var hole0 = new THREE.Path();
+    hole0.absellipse(0, 0.20, 0.055, 0.115, 0, Math.PI * 2, true, 0);
+    shape0.holes.push(hole0);
+
+    var extrudeOpts = {
+      depth: 0.068,
+      curveSegments: 24,
+      bevelEnabled: true,
+      bevelThickness: 0.014,
+      bevelSize: 0.012,
+      bevelSegments: 3
+    };
+
+    var geo2 = new THREE.ExtrudeGeometry(shape2, extrudeOpts);
+    var geo0 = new THREE.ExtrudeGeometry(shape0, extrudeOpts);
+
+    // Normalisation des UVs pour que les rayures soient bien proportionnees
+    [geo2, geo0].forEach(function (g) {
+      var pos = g.attributes.position;
+      var uv = g.attributes.uv;
+      for (var i = 0; i < pos.count; i++) {
+        uv.setXY(i, pos.getX(i) * 2.2 + 0.5, pos.getY(i) * 2.2);
+      }
+    });
+
+    var mesh2 = new THREE.Mesh(geo2, [candleFrontMat, candleSideMat]);
+    mesh2.position.set(-0.155, 0.07, -0.034);
+    mesh2.castShadow = true;
+    candleGroup.add(mesh2);
+
+    var mesh0 = new THREE.Mesh(geo0, [candleFrontMat, candleSideMat]);
+    mesh0.position.set(0.155, 0.07, -0.034);
+    mesh0.castShadow = true;
+    candleGroup.add(mesh0);
+  }
+
+  function buildClassicCandle() {
+    var body = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.055, 0.055, 0.42, 24),
+      candleFrontMat
+    );
+    body.position.y = 0.21;
+    body.castShadow = true;
+    candleGroup.add(body);
+  }
+
+  if (cfg.age) {
+    buildNumber20Candle();
+  } else {
+    buildClassicCandle();
+  }
+
+  // Meche
+  var wickTopY = 0.53;
+  var wick = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.010, 0.012, 0.08, 8),
+    new THREE.MeshStandardMaterial({ color: 0x5a3a2a, roughness: 0.8 })
+  );
+  wick.position.set(0, wickTopY - 0.04, 0);
+  candleGroup.add(wick);
+
+  // Flamme 3D + PointLight chaude
+  var flamePivot = new THREE.Group();
+  flamePivot.position.set(0, wickTopY, 0);
+  flamePivot.scale.setScalar(0);
+  candleGroup.add(flamePivot);
+
+  var flameWindGroup = new THREE.Group();
+  flamePivot.add(flameWindGroup);
+
+  function makeFlameGeo(radius, height) {
+    var pts = [];
+    for (var i = 0; i <= 16; i++) {
+      var t = i / 16;
+      var r = radius * Math.sin(t * Math.PI) * Math.pow(1 - t, 0.42);
+      pts.push(new THREE.Vector2(r, t * height));
+    }
+    return new THREE.LatheGeometry(pts, 18);
+  }
+
+  var outerFlame = new THREE.Mesh(
+    makeFlameGeo(0.068, 0.22),
+    new THREE.MeshBasicMaterial({ color: 0xffb547 })
+  );
+  flameWindGroup.add(outerFlame);
+
+  var innerFlame = new THREE.Mesh(
+    makeFlameGeo(0.038, 0.13),
+    new THREE.MeshBasicMaterial({ color: 0xfff3c4 })
+  );
+  innerFlame.position.set(0, 0.015, 0.005);
+  flameWindGroup.add(innerFlame);
+
+  var flameGlowSprite = new THREE.Sprite(
+    new THREE.SpriteMaterial({
+      map: makeGlowTexture("rgba(255, 235, 170, 0.92)", "rgba(255, 181, 71, 0.42)"),
+      transparent: true,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false
+    })
+  );
+  flameGlowSprite.position.set(0, 0.10, 0);
+  flameGlowSprite.scale.set(0.56, 0.64, 1);
+  flamePivot.add(flameGlowSprite);
+
+  var candleLight = new THREE.PointLight(0xffb14a, 0, 6.2, 1.3);
+  candleLight.position.set(0, 0.16, 0.18);
+  flamePivot.add(candleLight);
+
+  var candleBounceLight = new THREE.PointLight(0xffc488, 0, 4.5, 1.2);
+  candleBounceLight.position.set(0, -0.18, 0.95);
+  flamePivot.add(candleBounceLight);
+
+  // Repere pour projeter la position ecran de la flamme et du gateau
+  var flameAnchor = new THREE.Object3D();
+  flameAnchor.position.set(0, wickTopY + 0.09, 0);
+  candleGroup.add(flameAnchor);
+
+  var cakeAnchor = new THREE.Object3D();
+  cakeAnchor.position.set(0, 0.05, 0);
+  cakeGroup.add(cakeAnchor);
+
+  /* ------------------------------------------------------------------
+     TIMELINE GSAP & ETATS D'ANIMATION
+     ------------------------------------------------------------------ */
+  var openTl = null;
+  var isOpened = false;
+  var isLit = false;
+  var isBlown = false;
+  var windLevel = 0;
+  var running = false;
+  var rafId = 0;
+
+  function buildTimeline() {
+    if (openTl) { openTl.kill(); }
+    var tl = gsap.timeline({ paused: true });
+
+    // 1. Les deux rabats s'ouvrent a ~118 degres
+    var flapAngle = 118 * Math.PI / 180;
+    tl.to(flapL.rotation, { z: flapAngle, duration: 1.05, ease: "back.out(1.18)" }, 0);
+    tl.to(flapR.rotation, { z: -flapAngle, duration: 1.05, ease: "back.out(1.18)" }, 0);
+    tl.to(heartGlowMat, { opacity: 0, duration: 0.4 }, 0);
+    tl.to(heartMat, { emissiveIntensity: 0.04, duration: 0.5 }, 0);
+
+    // 2. La boite descend doucement pendant que le gateau monte hors de la boite
+    tl.to(boxGroup.position, { y: BOX_Y_OPEN, duration: 1.05, ease: "power2.inOut" }, 0.15);
+    tl.to(boxGroup.scale, { x: 0.92, y: 0.92, z: 0.92, duration: 1.05, ease: "power2.inOut" }, 0.15);
+
+    tl.call(function () { cakeGroup.visible = true; }, null, 0.22);
+    tl.to(cakeGroup.position, { y: CAKE_Y_OPEN, duration: 1.02, ease: "back.out(1.15)" }, 0.25);
+    tl.to(cakeGroup.scale, { x: 1, y: 1, z: 1, duration: 1.02, ease: "back.out(1.15)" }, 0.25);
+
+    // 3. Couronnes de perles nacrees une par une
+    pearlsBottom.forEach(function (p, i) {
+      tl.to(p.scale, { x: 1, y: 1, z: 1, duration: 0.38, ease: "back.out(2.1)" }, T.pearlsBottom + i * T.pearlStep);
+    });
+    pearlsTop.forEach(function (p, i) {
+      tl.to(p.scale, { x: 1, y: 1, z: 1, duration: 0.38, ease: "back.out(2.1)" }, T.pearlsTop + i * T.pearlStep);
+    });
+
+    // 4. Vermicelles
+    sprinkles.forEach(function (s, i) {
+      tl.to(s.scale, { x: 1, y: 1, z: 1, duration: 0.36, ease: "back.out(2.0)" }, T.sprinkles + i * 0.04);
+    });
+
+    // 5. Textes "Happy", "Birthday" et "Mon amour" ecrits progressivement
+    tl.to(writeState, { happy: 1, duration: 0.60, ease: "power2.out", onUpdate: updateCakeTexts }, T.happy);
+    tl.to(writeState, { birthday: 1, duration: 0.65, ease: "power2.out", onUpdate: updateCakeTexts }, T.birthday);
+    tl.to(writeState, { name: 1, duration: 0.75, ease: "power2.out", onUpdate: updateCakeTexts }, T.name);
+
+    // 6. La bougie "20" se pose sur le gateau
+    tl.call(function () { candleGroup.visible = true; }, null, T.candle);
+    tl.to(candleGroup.position, { y: CANDLE_Y_REST, duration: 0.68, ease: "back.out(1.55)" }, T.candle);
+
+    // 7. La flamme s'allume + PointLight chaude
+    tl.call(function () { isLit = true; }, null, T.lit);
+    tl.to(flamePivot.scale, { x: 1, y: 1, z: 1, duration: 0.38, ease: "back.out(2.0)" }, T.lit);
+    tl.to(candleLight, { intensity: 3.2, duration: 0.42, ease: "power2.out" }, T.lit);
+    tl.to(candleBounceLight, { intensity: 1.1, duration: 0.42, ease: "power2.out" }, T.lit);
+
+    openTl = tl;
+    return tl;
+  }
+
+  /* ------------------------------------------------------------------
+     REDIMENSIONNEMENT & PROJECTION 3D -> ECRAN
+     ------------------------------------------------------------------ */
+  function resize() {
+    var gw = giftBtn.clientWidth || Math.min(224, window.innerWidth * 0.56);
+    var gh = giftBtn.clientHeight || gw * 1.14;
+    var w = Math.round(gw * 1.76);
+    var h = Math.round(gh * 1.62);
+    if (w < 10 || h < 10) { return; }
+    renderer.setSize(w, h, false);
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+  }
+  resize();
+  window.addEventListener("resize", resize);
+  if ("ResizeObserver" in window) {
+    new ResizeObserver(resize).observe(giftBtn);
+  }
+
+  var tmpV = new THREE.Vector3();
+  function projectToScreen(obj) {
+    scene.updateMatrixWorld(true);
+    obj.getWorldPosition(tmpV);
+    tmpV.project(camera);
+    var r = canvas.getBoundingClientRect();
+    if (!r.width || !r.height) {
+      var gr = giftBtn.getBoundingClientRect();
+      return { x: gr.left + gr.width / 2, y: gr.top + gr.height * 0.3 };
+    }
+    return {
+      x: r.left + (tmpV.x * 0.5 + 0.5) * r.width,
+      y: r.top + (-tmpV.y * 0.5 + 0.5) * r.height
+    };
+  }
+
+  /* ------------------------------------------------------------------
+     BOUCLE DE RENDU (s'arrete quand #seal est masque)
+     ------------------------------------------------------------------ */
+  var clock = new THREE.Clock();
+
+  function renderFrame() {
+    if (!running) { return; }
+    rafId = window.requestAnimationFrame(renderFrame);
+    var t = clock.getElapsedTime();
+
+    if (!isOpened && !reduce) {
+      // Oscillation douce de la boite avant ouverture + pulsation du coeur
+      var cyc = (t % 3.0) / 3.0;
+      var wig = cyc > 0.7 ? Math.sin((cyc - 0.7) / 0.3 * Math.PI * 4) * 0.042 * (1 - (cyc - 0.7) / 0.3) : 0;
+      boxGroup.rotation.z = wig;
+      boxGroup.rotation.y = Math.sin(t * 1.4) * 0.03;
+      var pulse = 0.5 + 0.5 * Math.sin(t * 2.85);
+      heartMat.emissiveIntensity = 0.14 + pulse * 0.42;
+      heartGlowMat.opacity = 0.28 + pulse * 0.48;
+    }
+
+    if (isLit && !isBlown && !reduce) {
+      // Danse de la flamme + inclinaison au souffle du micro
+      var f1 = Math.sin(t * 19.0) * 0.06 + Math.cos(t * 27.0) * 0.03;
+      var f2 = Math.cos(t * 23.0) * 0.05;
+      outerFlame.scale.set(1 - f1 * 0.7, 1 + f1, 1 - f1 * 0.5);
+      outerFlame.rotation.z = f2 * 0.6;
+      innerFlame.scale.set(1 + f2 * 0.5, 1 - f2 * 0.6, 1);
+
+      var glowPulse = 0.92 + 0.12 * Math.sin(t * 5.6);
+      flameGlowSprite.scale.set(0.54 * glowPulse, 0.62 * glowPulse, 1);
+      candleLight.intensity = 3.2 + Math.sin(t * 17.0) * 0.28;
+
+      var targetTilt = -windLevel * 0.52;
+      flameWindGroup.rotation.z += (targetTilt - flameWindGroup.rotation.z) * 0.25;
+      flameWindGroup.scale.y = 1 + windLevel * 0.22;
+    }
+
+    if (controls.enabled) {
+      controls.update();
+    }
+    renderer.render(scene, camera);
+  }
+
+  function startLoop() {
+    if (running) { return; }
+    running = true;
+    clock.start();
+    resize();
+    renderFrame();
+  }
+
+  function stopLoop() {
+    running = false;
+    if (rafId) {
+      window.cancelAnimationFrame(rafId);
+      rafId = 0;
+    }
+  }
+
+  /* ------------------------------------------------------------------
+     API PUBLIQUE BRANCHEE SUR L'EXISTANT (window.GIFT3D)
+     ------------------------------------------------------------------ */
+  window.GIFT3D = {
+    active: true,
+    onShow: function () {
+      resize();
+      startLoop();
+    },
+    shake: function () {
+      startLoop();
+      if (reduce) { return; }
+      gsap.fromTo(boxGroup.rotation,
+        { z: 0 },
+        {
+          keyframes: [
+            { z: -0.075, x: 0.03, duration: 0.06 },
+            { z:  0.075, x: -0.03, duration: 0.07 },
+            { z: -0.055, x: 0.02, duration: 0.07 },
+            { z:  0.040, x: -0.01, duration: 0.06 },
+            { z:  0,     x: 0,    duration: 0.06 }
+          ],
+          ease: "power1.inOut"
+        }
+      );
+      gsap.fromTo(boxGroup.scale,
+        { x: 1, y: 1, z: 1 },
+        {
+          keyframes: [
+            { x: 1.045, y: 1.045, z: 1.045, duration: 0.16 },
+            { x: 1,     y: 1,     z: 1,     duration: 0.16 }
+          ]
+        }
+      );
+    },
+    open: function () {
+      isOpened = true;
+      startLoop();
+      gsap.killTweensOf(boxGroup.rotation);
+      boxGroup.rotation.set(0, 0, 0);
+      var tl = buildTimeline();
+      if (reduce) {
+        tl.progress(1);
+      } else {
+        tl.play(0);
+      }
+    },
+    goDark: function () {
+      var dur = reduce ? 0.01 : 1.3;
+      gsap.to(ambLight, { intensity: 0.36, duration: dur, ease: "power2.out" });
+      gsap.to(hemiLight, { intensity: 0.22, duration: dur, ease: "power2.out" });
+      gsap.to(dirLight, { intensity: 0.24, duration: dur, ease: "power2.out" });
+      gsap.to(fillLight, { intensity: 0.16, duration: dur, ease: "power2.out" });
+      gsap.to(candleLight, { intensity: 4.2, duration: dur, ease: "power2.out" });
+      gsap.to(candleBounceLight, { intensity: 1.65, duration: dur, ease: "power2.out" });
+    },
+    enableControls: function (on) {
+      controls.enabled = !!on;
+    },
+    skipToWish: function () {
+      isOpened = true;
+      isLit = true;
+      if (!openTl) { buildTimeline(); }
+      openTl.progress(1);
+      updateCakeTexts();
+      renderer.render(scene, camera);
+    },
+    setWind: function (lvl) {
+      windLevel = Math.max(0, Math.min(1, lvl || 0));
+    },
+    blowOut: function () {
+      isBlown = true;
+      windLevel = 0;
+      var dur = reduce ? 0.01 : 0.22;
+      gsap.to(flamePivot.scale, { x: 0, y: 0, z: 0, duration: dur, ease: "power2.in" });
+      gsap.to(candleLight, { intensity: 0, duration: dur, ease: "power2.in" });
+      gsap.to(candleBounceLight, { intensity: 0, duration: dur, ease: "power2.in" });
+    },
+    restoreLight: function () {
+      var dur = reduce ? 0.01 : 1.1;
+      gsap.to(ambLight, { intensity: 1.55, duration: dur, ease: "power2.out" });
+      gsap.to(hemiLight, { intensity: 0.75, duration: dur, ease: "power2.out" });
+      gsap.to(dirLight, { intensity: 1.45, duration: dur, ease: "power2.out" });
+      gsap.to(fillLight, { intensity: 0.55, duration: dur, ease: "power2.out" });
+    },
+    flamePos: function () {
+      return projectToScreen(flameAnchor);
+    },
+    cakePos: function () {
+      return projectToScreen(cakeAnchor);
+    },
+    stop: function () {
+      controls.enabled = false;
+      stopLoop();
+    },
+    reset: function () {
+      if (openTl) { openTl.kill(); openTl = null; }
+      gsap.killTweensOf([
+        boxGroup.position, boxGroup.rotation, boxGroup.scale,
+        flapL.rotation, flapR.rotation,
+        cakeGroup.position, cakeGroup.scale,
+        candleGroup.position, flamePivot.scale,
+        ambLight, hemiLight, dirLight, fillLight, candleLight,
+        heartGlowMat, heartMat, writeState
+      ]);
+
+      isOpened = false;
+      isLit = false;
+      isBlown = false;
+      windLevel = 0;
+
+      controls.enabled = false;
+      controls.reset();
+      camera.position.set(0, 2.65, 4.95);
+      camera.lookAt(0, 0.08, 0);
+
+      boxGroup.position.set(0, BOX_Y_CLOSED, 0);
+      boxGroup.rotation.set(0, 0, 0);
+      boxGroup.scale.setScalar(1);
+      flapL.rotation.set(0, 0, 0);
+      flapR.rotation.set(0, 0, 0);
+      heartMat.emissiveIntensity = 0.18;
+      heartGlowMat.opacity = 0.45;
+
+      cakeGroup.visible = false;
+      cakeGroup.position.set(0, CAKE_Y_HIDDEN, 0);
+      cakeGroup.scale.setScalar(0.46);
+      pearlsBottom.forEach(function (p) { p.scale.setScalar(0); });
+      pearlsTop.forEach(function (p) { p.scale.setScalar(0); });
+      sprinkles.forEach(function (s) { s.scale.setScalar(0); });
+
+      writeState.happy = 0;
+      writeState.birthday = 0;
+      writeState.name = 0;
+      updateCakeTexts();
+
+      candleGroup.visible = false;
+      candleGroup.position.set(0, CANDLE_Y_START, CANDLE_Z);
+      flamePivot.scale.setScalar(0);
+      flameWindGroup.rotation.set(0, 0, 0);
+      flameWindGroup.scale.setScalar(1);
+
+      ambLight.intensity = 1.55;
+      hemiLight.intensity = 0.75;
+      dirLight.intensity = 1.45;
+      fillLight.intensity = 0.55;
+      candleLight.intensity = 0;
+      candleBounceLight.intensity = 0;
+
+      startLoop();
+    }
+  };
+
+  if (!sceneBox.hidden) {
+    startLoop();
+  }
 })();
 </script>
 
