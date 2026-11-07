@@ -1467,7 +1467,7 @@
     <p class="seal__text">Ta surprise s'ouvre le 8 novembre à minuit, heure du Mali.</p>
     <p class="tease" id="tease" aria-live="polite"></p>
     <div class="secret" id="secret" aria-label="Un message se cache ici"></div>
-    <p class="secret__cap" id="secretCap">Un message se cache ici. Il se dévoile avec le temps, et à chaque bisou.</p>
+    <p class="secret__cap" id="secretCap">Un message se cache ici. Il se dévoile à chaque bisou.</p>
     <div class="clocks" aria-label="L'heure chez nous deux">
       <div class="clock">
         <svg class="clock__flag" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="8.5" fill="url(#flagFR)" stroke="#FFFFFF" stroke-width="2"/></svg>
@@ -2459,9 +2459,8 @@
   })();
   function updateSecret() {
     var ms = target - Date.now();
-    // le message reste cache jusqu'a la derniere heure, puis se devoile avec le temps
-    var frac = isNaN(ms) ? 1 : Math.min(1, Math.max(0, 1 - ms / 3600000));
-    var n = Math.min(secretLetters.length, Math.floor(frac * secretLetters.length) + kisses);
+    // le message se devoile uniquement avec les bisous (une lettre par bisou, remis a zero au rechargement)
+    var n = Math.min(secretLetters.length, kisses);
     for (; secretShown < n; secretShown++) {
       var l = secretLetters[secretShown];
       l.textContent = l.getAttribute("data-c"); l.classList.add("on");
