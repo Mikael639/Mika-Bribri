@@ -20,7 +20,8 @@ un petit serveur local).
 4. **La bougie** se plante et s'allume, **la lumière s'éteint**. « Fais un vœu… » :
    elle **souffle dans le micro** (bouton « Souffler pour de vrai ») ou touche le
    gâteau. Fumée, la lumière revient : explosion de confettis, feux d'artifice,
-   « Joyeux anniversaire, Brigitte ! ». Puis **Lire ma carte**.
+   « Joyeux anniversaire, Brigitte ! ». Un **anneau de 8 photos** apparaît et tourne
+   autour du gâteau (liste `CAROUSEL_PHOTOS` dans le script 3D). Puis **Lire ma carte**.
 5. La carte s'ouvre **dans un cœur qui grandit**. Titre lettre par lettre, photo
    qui arrive en tournoyant avec des cœurs qui s'envolent, **message écrit par
    un stylo-plume** qui suit chaque lettre (toucher le message l'affiche d'un coup), photos qui arrivent
