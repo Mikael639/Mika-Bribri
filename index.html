@@ -1218,6 +1218,55 @@
     background: linear-gradient(transparent, rgba(42, 30, 27, 0.75));
   }
 
+  /* --- l'album : quand elle etait petite --- */
+  .album { margin: 56px auto 0; }
+  .album__head { margin-bottom: 14px; text-align: center; }
+  .album__title { margin: 0 0 2px; font-family: var(--hand); font-size: 34px; font-weight: 600; color: var(--ink); line-height: 1.25; }
+  .album__track {
+    display: flex;
+    gap: 18px;
+    margin: 0 -24px;
+    padding: 14px 24px 26px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .album__track::-webkit-scrollbar { display: none; }
+  .album__item {
+    --rest: -2deg;
+    flex: 0 0 auto;
+    margin: 0;
+    padding: 9px 9px 0;
+    scroll-snap-align: center;
+    background: #FFFFFF;
+    border-radius: 4px;
+    box-shadow: 0 14px 28px -16px rgba(90, 35, 50, 0.55), 0 0 0 1px rgba(90, 35, 50, 0.05);
+    transform: rotate(var(--rest));
+    cursor: var(--cursor-click);
+  }
+  .album__item:nth-child(even) { --rest: 2deg; }
+  .album__item:nth-child(3n) { --rest: -1deg; }
+  .album__item img { display: block; height: 280px; width: auto; border-radius: 2px; filter: saturate(0.96); }
+  .album__item figcaption {
+    width: 0;
+    min-width: 100%;
+    padding: 10px 4px 13px;
+    font-family: var(--hand);
+    font-size: 19px;
+    font-weight: 600;
+    line-height: 1.35;
+    text-align: center;
+    color: var(--ink);
+  }
+  .album__item.reveal { opacity: 0; transform: translateY(30px) rotate(calc(var(--rest) * 2)) scale(0.94); transition: opacity 0.8s ease, transform 1s cubic-bezier(0.2, 1.25, 0.4, 1); }
+  .album__item.reveal.is-in { opacity: 1; transform: rotate(var(--rest)); }
+  .album__hint { margin: 0; text-align: center; font-size: 13px; color: var(--ink-faint); }
+  @media (min-width: 900px) {
+    .album__track { justify-content: safe center; }
+    .album__item img { height: 340px; }
+  }
+
   /* --- Photo en grand --- */
   .lb {
     position: fixed;
@@ -1817,6 +1866,49 @@
       <div class="calls__track" id="calls"></div>
       <p class="calls__hint">Glisse pour voir les autres →</p>
     </div>
+  </section>
+
+  <!-- 3b. Quand elle etait petite -->
+  <section class="album wrap">
+    <div class="album__head reveal">
+      <h2 class="album__title">Bien avant moi</h2>
+      <p class="eyebrow">Déjà adorable</p>
+    </div>
+    <div class="album__track" id="albumTrack">
+      <figure class="album__item reveal">
+        <img src="photos/petite-1-bras.jpg" alt="Brigitte bébé dans les bras d'une petite fille" loading="lazy">
+        <figcaption>Bien entourée, déjà</figcaption>
+      </figure>
+      <figure class="album__item reveal">
+        <img src="photos/petite-2-nouveau-ne.jpg" alt="Brigitte nouveau-née, les yeux grands ouverts" loading="lazy">
+        <figcaption>Les tout premiers jours</figcaption>
+      </figure>
+      <figure class="album__item reveal">
+        <img src="photos/petite-3-regard.jpg" alt="Brigitte bébé, avec une barboteuse orange" loading="lazy">
+        <figcaption>Ce regard, déjà</figcaption>
+      </figure>
+      <figure class="album__item reveal">
+        <img src="photos/petite-4-joues.jpg" alt="Brigitte bébé en gros plan" loading="lazy">
+        <figcaption>Ces petites joues…</figcaption>
+      </figure>
+      <figure class="album__item reveal">
+        <img src="photos/petite-5-serieuse.jpg" alt="Brigitte bébé au regard sérieux, en t-shirt blanc" loading="lazy">
+        <figcaption>Déjà du caractère</figcaption>
+      </figure>
+      <figure class="album__item reveal">
+        <img src="photos/petite-6-dos.jpg" alt="Brigitte bébé sur le dos d'une grande personne" loading="lazy">
+        <figcaption>Au chaud, sur le dos</figcaption>
+      </figure>
+      <figure class="album__item reveal">
+        <img src="photos/petite-7-coucou.jpg" alt="Brigitte bébé qui fait un signe de la main" loading="lazy">
+        <figcaption>Coucou !</figcaption>
+      </figure>
+      <figure class="album__item reveal">
+        <img src="photos/petite-8-bain.jpg" alt="Brigitte bébé qui sourit dans une bassine" loading="lazy">
+        <figcaption>Ce sourire dans la bassine</figcaption>
+      </figure>
+    </div>
+    <p class="album__hint">Glisse pour voir les autres →</p>
   </section>
 
   <!-- 4. Les photos ---------------------------------------------- -->
@@ -3167,7 +3259,7 @@
   })();
 
   /* --- 4. Photos en grand --- */
-  var figs = Array.prototype.slice.call(document.querySelectorAll(".grid figure"));
+  var figs = Array.prototype.slice.call(document.querySelectorAll(".album figure, .grid figure"));
   var lb = $("lb"), lbImg = $("lbImg"), lbCap = $("lbCap");
   var lbIdx = 0, lbX = null, lbSwiped = false;
 
