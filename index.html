@@ -1258,33 +1258,61 @@
   }
   .leaf__face--back { transform: rotateY(180deg); border-radius: 12px 3px 3px 12px; }
 
-  /* la couverture : livre de princesse */
+  /* la couverture : l'image du livre de princesse + les ecritures en texte */
   .leaf__face--cover {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    padding: 20px 18px;
+    background: #EFA6B8 url("photos/couverture.jpg") center / cover no-repeat;
+    box-shadow: inset 7px 0 11px -5px rgba(110, 47, 70, 0.4);
+    color: #A0621C;
     text-align: center;
-    color: #6E2F46;
-    background:
-      radial-gradient(90% 60% at 28% 14%, rgba(255, 255, 255, 0.75), transparent 62%),
-      linear-gradient(115deg, transparent 38%, rgba(255, 255, 255, 0.28) 50%, transparent 62%),
-      linear-gradient(150deg, #F8D9E0, #EDB1C2 52%, #DE93AB);
-    box-shadow: inset 7px 0 11px -5px rgba(110, 47, 70, 0.4), inset 0 0 0 5px rgba(255, 255, 255, 0.28);
   }
-  .cover__frame { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
-  .cover__crown { position: relative; width: 46px; height: 32px; margin-bottom: 2px; filter: drop-shadow(0 2px 2px rgba(120, 80, 20, 0.35)); }
-  .cover__name { position: relative; margin: 2px 0 0; font-family: var(--hand); font-size: 23px; font-weight: 600; line-height: 1.1; white-space: nowrap; color: #6E2F46; text-shadow: 0 1px 0 rgba(255, 255, 255, 0.6); }
-  .cover__ted { margin-left: 4px; font-family: system-ui, "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif; font-size: 0.78em; vertical-align: 0.05em; }
-  .cover__sub { position: relative; margin: 12px 0 0; font-family: var(--hand); font-size: 16px; line-height: 1.25; font-weight: 600; color: #98681B; }
-  .cover__hint { position: absolute; bottom: 27px; margin: 0; font-size: 8px; letter-spacing: 0.14em; text-transform: uppercase; color: rgba(110, 47, 70, 0.7); animation: bookHint 2.4s ease-in-out infinite; }
-  @keyframes bookHint { 50% { opacity: 0.35; } }
-  /* paillettes qui scintillent sur la couverture */
-  .spark { position: absolute; line-height: 1; color: #D9A93E; text-shadow: 0 0 6px rgba(255, 236, 170, 0.9); pointer-events: none; animation: twinkle 2.6s ease-in-out infinite; }
-  .spark:nth-of-type(odd) { color: #FFFFFF; }
-  @keyframes twinkle { 0%, 100% { opacity: 0.25; transform: scale(0.6) rotate(0deg); } 50% { opacity: 1; transform: scale(1.15) rotate(25deg); } }
+  /* un reflet nacre qui passe de temps en temps */
+  .leaf__face--cover::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(105deg, transparent 40%, rgba(255, 255, 255, 0.4) 50%, transparent 60%);
+    transform: translateX(-130%);
+    animation: coverShine 6s ease-in-out 1.2s infinite;
+  }
+  @keyframes coverShine { 0%, 62% { transform: translateX(-130%); } 100% { transform: translateX(130%); } }
+  .cover__name {
+    position: absolute; left: 0; right: 0; top: 32.5%;
+    margin: 0;
+    font-family: var(--hand);
+    font-size: calc(var(--pw) * 0.125);
+    font-weight: 600;
+    line-height: 1.1;
+    white-space: nowrap;
+    color: #A0621C;
+    text-shadow: 0 1px 0 rgba(255, 238, 205, 0.75), 0 -1px 0 rgba(90, 45, 10, 0.25);
+  }
+  .cover__ted { margin-left: 0.12em; font-family: system-ui, "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif; font-size: 0.74em; vertical-align: 0.05em; }
+  .cover__sub {
+    position: absolute; left: 0; right: 0; top: 49.6%;
+    margin: 0;
+    font-family: var(--hand);
+    font-size: calc(var(--pw) * 0.072);
+    line-height: 1.3;
+    font-weight: 600;
+    color: #9A5A1B;
+    text-shadow: 0 1px 0 rgba(255, 238, 205, 0.6);
+  }
+  .cover__hint {
+    position: absolute; left: 50%; bottom: 4.5%;
+    transform: translateX(-50%);
+    margin: 0;
+    padding: 0.35em 0.9em;
+    white-space: nowrap;
+    border-radius: 999px;
+    background: rgba(255, 246, 240, 0.82);
+    font-size: calc(var(--pw) * 0.04);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #7A3E4E;
+    animation: bookHint 2.4s ease-in-out infinite;
+  }
+  @keyframes bookHint { 50% { opacity: 0.55; } }
   /* gerbe de paillettes a l'ouverture */
   .burst { position: absolute; left: 75%; top: 50%; width: 0; height: 0; pointer-events: none; z-index: 99; }
   .burst i { position: absolute; left: 0; top: 0; font-style: normal; line-height: 1; color: #E2B34A; text-shadow: 0 0 8px rgba(255, 236, 170, 0.95); will-change: transform, opacity; }
@@ -1342,13 +1370,13 @@
     box-shadow: 0 8px 16px -10px rgba(90, 35, 50, 0.5);
   }
   .book__btn:disabled { opacity: 0.3; box-shadow: none; }
-  @media (prefers-reduced-motion: reduce) { .book, .leaf, .leaf.is-turned { transition: none; } .cover__hint, .spark { animation: none; } .spark { opacity: 0.8; } }
+  @media (prefers-reduced-motion: reduce) { .book, .leaf, .leaf.is-turned { transition: none; } .cover__hint, .leaf__face--cover::after { animation: none; } }
   @media (min-width: 900px) {
     .book { --pw: 250px; }
     .page__photo { padding: 8px 8px 0; }
     .page__photo figcaption { font-size: 18px; padding: 8px 4px 10px; }
     .page__num { font-size: 11px; bottom: 10px; }
-    .cover__name { font-size: 34px; } .cover__sub { font-size: 22px; margin-top: 16px; } .cover__crown { width: 66px; height: 46px; } .cover__hint { font-size: 10px; bottom: 30px; }
+   
     .leaf__face--page { padding: 20px 14px 30px 22px; }
     .leaf__face--page.leaf__face--back { padding: 20px 22px 30px 14px; }
   }
@@ -3350,25 +3378,7 @@
 
     var cover = document.createElement("div");
     cover.className = "leaf__face leaf__face--cover";
-    var sparks = [["10%", "14%", 15], ["82%", "11%", 18], ["13%", "40%", 12], ["84%", "45%", 15], ["15%", "72%", 16], ["80%", "74%", 12], ["48%", "8%", 12], ["60%", "84%", 13]]
-      .map(function (q, i) { return '<span class="spark" style="left:' + q[0] + ';top:' + q[1] + ';font-size:' + q[2] + 'px;animation-delay:' + (i * 0.37).toFixed(2) + 's" aria-hidden="true">✦</span>'; }).join("");
     cover.innerHTML =
-      '<svg class="cover__frame" viewBox="0 0 100 152" aria-hidden="true">' +
-        '<rect x="5" y="5" width="90" height="142" rx="4" fill="none" stroke="#C9A24A" stroke-width="0.9"/>' +
-        '<rect x="8" y="8" width="84" height="136" rx="2.5" fill="none" stroke="#C9A24A" stroke-width="0.4"/>' +
-        '<g fill="none" stroke="#C9A24A" stroke-width="0.8" stroke-linecap="round">' +
-          '<path d="M8,20 C8,13 13,8 20,8"/><path d="M92,20 C92,13 87,8 80,8"/>' +
-          '<path d="M8,132 C8,139 13,144 20,144"/><path d="M92,132 C92,139 87,144 80,144"/>' +
-        '</g>' +
-        '<g fill="#C9A24A"><circle cx="21" cy="21" r="1.4"/><circle cx="79" cy="21" r="1.4"/><circle cx="21" cy="131" r="1.4"/><circle cx="79" cy="131" r="1.4"/></g>' +
-      '</svg>' + sparks +
-      '<svg class="cover__crown" viewBox="0 0 60 42" aria-hidden="true">' +
-        '<defs><linearGradient id="crownG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F7E08F"/><stop offset="1" stop-color="#C8942F"/></linearGradient></defs>' +
-        '<path d="M5,36 L3,12 L17,24 L30,5 L43,24 L57,12 L55,36 Z" fill="url(#crownG)" stroke="#A97A22" stroke-width="1" stroke-linejoin="round"/>' +
-        '<rect x="5" y="34" width="50" height="6" rx="2" fill="url(#crownG)" stroke="#A97A22" stroke-width="1"/>' +
-        '<circle cx="3" cy="11" r="3" fill="#F7E08F" stroke="#A97A22" stroke-width="0.8"/><circle cx="30" cy="4.5" r="3.4" fill="#F7E08F" stroke="#A97A22" stroke-width="0.8"/><circle cx="57" cy="11" r="3" fill="#F7E08F" stroke="#A97A22" stroke-width="0.8"/>' +
-        '<circle cx="30" cy="30" r="2.6" fill="#E0467C"/><circle cx="17" cy="32" r="1.8" fill="#FFFFFF"/><circle cx="43" cy="32" r="1.8" fill="#FFFFFF"/>' +
-      '</svg>' +
       '<p class="cover__name">Brigitte<span class="cover__ted" aria-hidden="true">🧸</span></p>' +
       '<p class="cover__sub">Il était une<br>petite princesse</p>' +
       '<p class="cover__hint">Touche pour ouvrir</p>';
