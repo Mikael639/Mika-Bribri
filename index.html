@@ -1218,38 +1218,36 @@
     background: linear-gradient(transparent, rgba(42, 30, 27, 0.75));
   }
 
-  /* --- l'album : un petit livre dont on tourne les pages --- */
+  /* --- l'album : un livre ouvert, deux photos par double page --- */
   .album { margin: 56px auto 0; }
   .album__head { margin-bottom: 22px; text-align: center; }
   .album__title { margin: 0 0 2px; font-family: var(--hand); font-size: 34px; font-weight: 600; color: var(--ink); line-height: 1.25; }
   .book {
-    --bw: min(300px, 78vw);
+    --pw: min(172px, 43vw);
     position: relative;
-    width: var(--bw);
-    height: calc(var(--bw) * 1.38);
+    width: calc(var(--pw) * 2);
+    height: calc(var(--pw) * 1.52);
     margin: 0 auto;
-    perspective: 1500px;
+    perspective: 1600px;
     touch-action: pan-y;
     -webkit-user-select: none;
     user-select: none;
     cursor: var(--cursor-click);
+    transition: transform 0.95s cubic-bezier(0.55, 0.1, 0.25, 1);
     filter: drop-shadow(0 22px 26px rgba(90, 35, 50, 0.28));
   }
+  /* ferme : seule la couverture, centree */
+  .book.is-closed { transform: translateX(calc(var(--pw) * -0.5)); }
   .book:focus-visible { outline: 2px solid var(--rose-deep); outline-offset: 10px; border-radius: 10px; }
   .leaf {
     position: absolute;
-    inset: 0;
+    top: 0; bottom: 0; left: 50%; right: 0;
     transform-origin: left center;
     transform-style: preserve-3d;
-    transition: transform 0.95s cubic-bezier(0.55, 0.1, 0.25, 1), opacity 0.25s ease;
+    transition: transform 0.95s cubic-bezier(0.55, 0.1, 0.25, 1);
     z-index: calc(50 - var(--i));
   }
-  .leaf.is-turned {
-    transform: rotateY(-168deg);
-    opacity: 0;
-    z-index: var(--i);
-    transition: transform 0.95s cubic-bezier(0.55, 0.1, 0.25, 1), opacity 0.35s ease 0.6s;
-  }
+  .leaf.is-turned { transform: rotateY(-180deg); z-index: var(--i); }
   .leaf__face {
     position: absolute;
     inset: 0;
@@ -1258,7 +1256,7 @@
     backface-visibility: hidden;
     -webkit-backface-visibility: hidden;
   }
-  .leaf__face--back { transform: rotateY(180deg); background: #F3E8DC; }
+  .leaf__face--back { transform: rotateY(180deg); border-radius: 12px 3px 3px 12px; }
 
   /* la couverture */
   .leaf__face--cover {
@@ -1266,64 +1264,71 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 10px;
-    padding: 26px;
+    gap: 8px;
+    padding: 18px;
     text-align: center;
     color: #FFF6F0;
     background:
       radial-gradient(120% 90% at 30% 20%, rgba(255, 255, 255, 0.22), transparent 60%),
       linear-gradient(145deg, #B0546D, #8A3550);
-    box-shadow: inset 6px 0 10px -4px rgba(0, 0, 0, 0.35), inset 0 0 0 7px rgba(255, 255, 255, 0.07);
+    box-shadow: inset 6px 0 10px -4px rgba(0, 0, 0, 0.35), inset 0 0 0 6px rgba(255, 255, 255, 0.07);
   }
   .leaf__face--cover::before {
     content: "";
     position: absolute;
-    inset: 14px 14px 14px 20px;
+    inset: 10px 10px 10px 14px;
     border: 1.5px solid rgba(240, 205, 150, 0.8);
     border-radius: 2px 8px 8px 2px;
     pointer-events: none;
   }
-  .cover__heart { width: 44px; height: 44px; fill: #F0CD96; }
-  .cover__name { margin: 4px 0 0; font-family: var(--hand); font-size: 38px; font-weight: 600; line-height: 1.1; }
-  .cover__sub { margin: 10px 0 0; font-family: var(--hand); font-size: 24px; line-height: 1.2; color: #F0CD96; }
-  .cover__hint { position: absolute; bottom: 30px; margin: 0; font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: rgba(255, 246, 240, 0.75); animation: bookHint 2.4s ease-in-out infinite; }
+  .cover__heart { width: 34px; height: 34px; fill: #F0CD96; }
+  .cover__name { margin: 2px 0 0; font-family: var(--hand); font-size: 30px; font-weight: 600; line-height: 1.1; }
+  .cover__sub { margin: 8px 0 0; font-family: var(--hand); font-size: 20px; line-height: 1.2; color: #F0CD96; }
+  .cover__hint { position: absolute; bottom: 20px; margin: 0; font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase; color: rgba(255, 246, 240, 0.75); animation: bookHint 2.4s ease-in-out infinite; }
   @keyframes bookHint { 50% { opacity: 0.35; } }
 
-  /* une page photo */
+  /* une page photo (droite par defaut ; --back = page de gauche) */
   .leaf__face--page {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 22px 20px 16px 28px;
+    padding: 14px 9px 22px 15px;
     background:
-      linear-gradient(90deg, rgba(90, 35, 50, 0.16), transparent 9%),
+      linear-gradient(90deg, rgba(90, 35, 50, 0.16), transparent 10%),
+      linear-gradient(180deg, #FFFAF3, #F8EEE2);
+  }
+  .leaf__face--page.leaf__face--back {
+    padding: 14px 15px 22px 9px;
+    background:
+      linear-gradient(270deg, rgba(90, 35, 50, 0.16), transparent 10%),
       linear-gradient(180deg, #FFFAF3, #F8EEE2);
   }
   .page__photo {
     margin: 0;
-    padding: 9px 9px 0;
+    padding: 6px 6px 0;
     background: #FFFFFF;
-    border-radius: 3px;
-    box-shadow: 0 10px 20px -12px rgba(90, 35, 50, 0.6), 0 0 0 1px rgba(90, 35, 50, 0.06);
+    border-radius: 2px;
+    box-shadow: 0 8px 16px -10px rgba(90, 35, 50, 0.6), 0 0 0 1px rgba(90, 35, 50, 0.06);
     transform: rotate(var(--rest, -1.5deg));
     max-width: 100%;
+    cursor: var(--cursor-click);
   }
-  .page__photo img { display: block; max-width: 100%; max-height: calc(var(--bw) * 0.92); width: auto; height: auto; border-radius: 2px; }
+  .page__photo img { display: block; max-width: 100%; max-height: calc(var(--pw) * 0.82); width: auto; height: auto; border-radius: 1px; }
   .page__photo figcaption {
     width: 0;
     min-width: 100%;
-    padding: 9px 4px 12px;
+    padding: 6px 2px 8px;
     font-family: var(--hand);
-    font-size: 19px;
+    font-size: 14px;
     font-weight: 600;
-    line-height: 1.35;
+    line-height: 1.3;
     text-align: center;
     color: var(--ink);
   }
-  .page__num { position: absolute; bottom: 10px; left: 0; right: 0; margin: 0; text-align: center; font-size: 11px; letter-spacing: 0.14em; color: var(--ink-faint); }
+  .page__num { position: absolute; bottom: 7px; left: 0; right: 0; margin: 0; text-align: center; font-size: 9px; letter-spacing: 0.12em; color: var(--ink-faint); }
 
-  .book__nav { display: flex; align-items: center; justify-content: center; gap: 16px; margin-top: 22px; }
+  .book__nav { display: flex; align-items: center; justify-content: center; gap: 14px; margin-top: 24px; }
   .book__count { margin: 0; min-width: 190px; text-align: center; font-size: 13px; letter-spacing: 0.04em; color: var(--ink-soft, var(--ink-faint)); }
   .book__btn {
     width: 40px; height: 40px;
@@ -1335,8 +1340,16 @@
     box-shadow: 0 8px 16px -10px rgba(90, 35, 50, 0.5);
   }
   .book__btn:disabled { opacity: 0.3; box-shadow: none; }
-  @media (prefers-reduced-motion: reduce) { .leaf, .leaf.is-turned { transition: none; } .cover__hint { animation: none; } }
-  @media (min-width: 900px) { .book { --bw: 340px; } }
+  @media (prefers-reduced-motion: reduce) { .book, .leaf, .leaf.is-turned { transition: none; } .cover__hint { animation: none; } }
+  @media (min-width: 900px) {
+    .book { --pw: 250px; }
+    .page__photo { padding: 8px 8px 0; }
+    .page__photo figcaption { font-size: 18px; padding: 8px 4px 10px; }
+    .page__num { font-size: 11px; bottom: 10px; }
+    .cover__name { font-size: 40px; } .cover__sub { font-size: 26px; } .cover__heart { width: 46px; height: 46px; }
+    .leaf__face--page { padding: 20px 14px 30px 22px; }
+    .leaf__face--page.leaf__face--back { padding: 20px 22px 30px 14px; }
+  }
 
   /* --- Photo en grand --- */
   .lb {
@@ -3294,7 +3307,7 @@
   }
   function watchNote() { if (noteWatcher) { noteWatcher.observe(note); } else { typeFinish(); } }
 
-  /* --- L'album : un livre dont on tourne les pages --- */
+  /* --- L'album : un livre ouvert, deux photos par double page --- */
   (function () {
     var book = $("book"), prevB = $("bookPrev"), nextB = $("bookNext"), count = $("bookCount");
     if (!book) { return; }
@@ -3311,28 +3324,10 @@
     var rests = [-1.5, 1.5, -1, 2, -2, 1, -1.5, 1.5];
     var leaves = [];
 
-    function leaf(i, front, back) {
-      var l = document.createElement("div");
-      l.className = "leaf";
-      l.style.setProperty("--i", i);
-      l.appendChild(front);
-      var b = document.createElement("div");
-      b.className = "leaf__face leaf__face--back";
-      l.appendChild(b);
-      book.appendChild(l);
-      leaves.push(l);
-    }
-
-    var cover = document.createElement("div");
-    cover.className = "leaf__face leaf__face--cover";
-    cover.innerHTML = '<svg class="cover__heart" viewBox="0 0 100 92" aria-hidden="true"><use href="#heart-shape"/></svg>' +
-      '<p class="cover__name">Brigitte</p><p class="cover__sub">toute petite</p>' +
-      '<p class="cover__hint">Touche pour ouvrir</p>';
-    leaf(0, cover);
-
-    PAGES.forEach(function (p, k) {
+    function pageFace(k, isBack) {
+      var p = PAGES[k];
       var f = document.createElement("div");
-      f.className = "leaf__face leaf__face--page";
+      f.className = "leaf__face leaf__face--page" + (isBack ? " leaf__face--back" : "");
       var fig = document.createElement("figure");
       fig.className = "page__photo";
       fig.style.setProperty("--rest", rests[k] + "deg");
@@ -3348,28 +3343,54 @@
       num.className = "page__num";
       num.textContent = (k + 1) + " / " + PAGES.length;
       f.appendChild(fig); f.appendChild(num);
-      leaf(k + 1, f);
+      return f;
+    }
+
+    var cover = document.createElement("div");
+    cover.className = "leaf__face leaf__face--cover";
+    cover.innerHTML = '<svg class="cover__heart" viewBox="0 0 100 92" aria-hidden="true"><use href="#heart-shape"/></svg>' +
+      '<p class="cover__name">Brigitte</p><p class="cover__sub">toute petite</p>' +
+      '<p class="cover__hint">Touche pour ouvrir</p>';
+
+    // feuille i : recto = page de droite, verso = page de gauche de la double page suivante
+    // feuille 0 : couverture / photo 1 ; feuille 1 : photo 2 / photo 3 ; ...
+    var faces = [[cover, pageFace(0, true)]];
+    for (var k = 1; k < PAGES.length; k += 2) {
+      faces.push([pageFace(k, false), k + 1 < PAGES.length ? pageFace(k + 1, true) : null]);
+    }
+    faces.forEach(function (pair, i) {
+      var l = document.createElement("div");
+      l.className = "leaf";
+      l.style.setProperty("--i", i);
+      l.appendChild(pair[0]);
+      if (pair[1]) { l.appendChild(pair[1]); }
+      book.appendChild(l);
+      leaves.push(l);
     });
 
-    var pos = 0, max = PAGES.length;   // pos = nombre de feuilles tournees
+    var pos = 0, max = leaves.length - 1;   // pos = nombre de feuilles tournees
     function render() {
       leaves.forEach(function (l, i) { l.classList.toggle("is-turned", i < pos); });
+      book.classList.toggle("is-closed", pos === 0);
       prevB.disabled = pos === 0;
       nextB.disabled = pos === max;
-      count.textContent = pos === 0 ? "Touche l'album pour l'ouvrir" : (pos === max ? "Photo " + pos + " sur " + max + " · la dernière 💗" : "Photo " + pos + " sur " + max);
+      if (pos === 0) { count.textContent = "Touche l'album pour l'ouvrir"; }
+      else { count.textContent = "Photos " + (pos * 2 - 1) + " et " + (pos * 2) + " sur " + PAGES.length + (pos === max ? " 💗" : ""); }
     }
     function go(d) { pos = Math.max(0, Math.min(max, pos + d)); render(); }
     prevB.addEventListener("click", function () { go(-1); });
     nextB.addEventListener("click", function () { go(1); });
 
-    var x0 = null, moved = false;
-    book.addEventListener("pointerdown", function (e) { x0 = e.clientX; moved = false; });
+    var x0 = null;
+    book.addEventListener("pointerdown", function (e) { x0 = e.clientX; });
     book.addEventListener("pointerup", function (e) {
       if (x0 === null) { return; }
       var dx = e.clientX - x0; x0 = null;
       if (Math.abs(dx) > 40) { go(dx < 0 ? 1 : -1); return; }
+      // toucher une photo l'agrandit (gere par la visionneuse), ailleurs on tourne la page
+      if (pos > 0 && e.target.closest && e.target.closest(".page__photo")) { return; }
       var r = book.getBoundingClientRect();
-      go(pos === 0 || e.clientX > r.left + r.width * 0.4 ? 1 : -1);
+      go(pos === 0 || e.clientX > r.left + r.width * 0.5 ? 1 : -1);
     });
     book.addEventListener("pointercancel", function () { x0 = null; });
     book.addEventListener("keydown", function (e) {
@@ -3386,7 +3407,7 @@
   })();
 
   /* --- 4. Photos en grand --- */
-  var figs = Array.prototype.slice.call(document.querySelectorAll(".grid figure"));
+  var figs = Array.prototype.slice.call(document.querySelectorAll(".page__photo, .grid figure"));
   var lb = $("lb"), lbImg = $("lbImg"), lbCap = $("lbCap");
   var lbIdx = 0, lbX = null, lbSwiped = false;
 
