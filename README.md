@@ -8,7 +8,7 @@ un petit serveur local).
 
 1. **Compte à rebours** jusqu'au 8 novembre à minuit (heure de son téléphone).
    Après minuit, cet écran est sauté.
-2. ~~**Deux questions secrètes**~~ (retirées après le 8 novembre, `questions: []`) à la suite (son surnom préféré, puis le 5 septembre). Indice après
+2. **Deux questions secrètes** à la suite (son surnom préféré, puis le 5 septembre). Indice après
    2 essais ratés, et elle entre quand même après 5 essais. Une fois réussie, la
    question n'est plus reposée sur ce téléphone.
 3. **La boîte cadeau en 3D** (vue de dessus, cœur sur le couvercle) tombe du

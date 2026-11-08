@@ -1950,9 +1950,21 @@
     // Avant ce moment, elle voit le compte a rebours.
     dateOuverture: "2026-11-08T00:00:00+00:00",
 
-    // Questions secretes : retirees apres le 8 novembre (plus de questions a chaque rejeu).
-    // Pour les remettre : questions: [ { question: "...", reponses: ["..."], indice: "..." } ]
-    questions: [],
+    // Questions secretes, posees l'une apres l'autre. Mets questions: [] pour les supprimer.
+    // Une reponse est acceptee si elle CONTIENT un des mots de la liste ;
+    // majuscules, accents et espaces sont ignores.
+    questions: [
+      {
+        question: "Quel surnom j'aime beaucoup te donner ?",
+        reponses: ["coeur", "bebe", "princesse"],
+        indice: "Petit indice : je te le dis tous les jours."
+      },
+      {
+        question: "Quel jour a-t-on officialisé notre relation ?",
+        reponses: ["5 septembre", "05 septembre", "cinq septembre", "05/09", "5/9"],
+        indice: "Petit indice : c'était en septembre."
+      }
+    ],
     // Apres ce nombre d'essais rates sur une question, on la laisse passer quand meme.
     essaisAvantEntree: 5,
 
