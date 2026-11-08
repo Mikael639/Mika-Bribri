@@ -1218,40 +1218,102 @@
     background: linear-gradient(transparent, rgba(42, 30, 27, 0.75));
   }
 
-  /* --- l'album : quand elle etait petite --- */
+  /* --- l'album : un petit livre dont on tourne les pages --- */
   .album { margin: 56px auto 0; }
-  .album__head { margin-bottom: 14px; text-align: center; }
+  .album__head { margin-bottom: 22px; text-align: center; }
   .album__title { margin: 0 0 2px; font-family: var(--hand); font-size: 34px; font-weight: 600; color: var(--ink); line-height: 1.25; }
-  .album__track {
-    display: flex;
-    gap: 18px;
-    margin: 0 -24px;
-    padding: 14px 24px 26px;
-    overflow-x: auto;
-    scroll-snap-type: x mandatory;
-    scrollbar-width: none;
-    -webkit-overflow-scrolling: touch;
+  .book {
+    --bw: min(300px, 78vw);
+    position: relative;
+    width: var(--bw);
+    height: calc(var(--bw) * 1.38);
+    margin: 0 auto;
+    perspective: 1500px;
+    touch-action: pan-y;
+    -webkit-user-select: none;
+    user-select: none;
+    cursor: var(--cursor-click);
+    filter: drop-shadow(0 22px 26px rgba(90, 35, 50, 0.28));
   }
-  .album__track::-webkit-scrollbar { display: none; }
-  .album__item {
-    --rest: -2deg;
-    flex: 0 0 auto;
+  .book:focus-visible { outline: 2px solid var(--rose-deep); outline-offset: 10px; border-radius: 10px; }
+  .leaf {
+    position: absolute;
+    inset: 0;
+    transform-origin: left center;
+    transform-style: preserve-3d;
+    transition: transform 0.95s cubic-bezier(0.55, 0.1, 0.25, 1), opacity 0.25s ease;
+    z-index: calc(50 - var(--i));
+  }
+  .leaf.is-turned {
+    transform: rotateY(-168deg);
+    opacity: 0;
+    z-index: var(--i);
+    transition: transform 0.95s cubic-bezier(0.55, 0.1, 0.25, 1), opacity 0.35s ease 0.6s;
+  }
+  .leaf__face {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    border-radius: 3px 12px 12px 3px;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+  }
+  .leaf__face--back { transform: rotateY(180deg); background: #F3E8DC; }
+
+  /* la couverture */
+  .leaf__face--cover {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 26px;
+    text-align: center;
+    color: #FFF6F0;
+    background:
+      radial-gradient(120% 90% at 30% 20%, rgba(255, 255, 255, 0.22), transparent 60%),
+      linear-gradient(145deg, #B0546D, #8A3550);
+    box-shadow: inset 6px 0 10px -4px rgba(0, 0, 0, 0.35), inset 0 0 0 7px rgba(255, 255, 255, 0.07);
+  }
+  .leaf__face--cover::before {
+    content: "";
+    position: absolute;
+    inset: 14px 14px 14px 20px;
+    border: 1.5px solid rgba(240, 205, 150, 0.8);
+    border-radius: 2px 8px 8px 2px;
+    pointer-events: none;
+  }
+  .cover__heart { width: 44px; height: 44px; fill: #F0CD96; }
+  .cover__name { margin: 4px 0 0; font-family: var(--hand); font-size: 38px; font-weight: 600; line-height: 1.1; }
+  .cover__sub { margin: 10px 0 0; font-family: var(--hand); font-size: 24px; line-height: 1.2; color: #F0CD96; }
+  .cover__hint { position: absolute; bottom: 30px; margin: 0; font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: rgba(255, 246, 240, 0.75); animation: bookHint 2.4s ease-in-out infinite; }
+  @keyframes bookHint { 50% { opacity: 0.35; } }
+
+  /* une page photo */
+  .leaf__face--page {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 22px 20px 16px 28px;
+    background:
+      linear-gradient(90deg, rgba(90, 35, 50, 0.16), transparent 9%),
+      linear-gradient(180deg, #FFFAF3, #F8EEE2);
+  }
+  .page__photo {
     margin: 0;
     padding: 9px 9px 0;
-    scroll-snap-align: center;
     background: #FFFFFF;
-    border-radius: 4px;
-    box-shadow: 0 14px 28px -16px rgba(90, 35, 50, 0.55), 0 0 0 1px rgba(90, 35, 50, 0.05);
-    transform: rotate(var(--rest));
-    cursor: var(--cursor-click);
+    border-radius: 3px;
+    box-shadow: 0 10px 20px -12px rgba(90, 35, 50, 0.6), 0 0 0 1px rgba(90, 35, 50, 0.06);
+    transform: rotate(var(--rest, -1.5deg));
+    max-width: 100%;
   }
-  .album__item:nth-child(even) { --rest: 2deg; }
-  .album__item:nth-child(3n) { --rest: -1deg; }
-  .album__item img { display: block; height: 280px; width: auto; border-radius: 2px; filter: saturate(0.96); }
-  .album__item figcaption {
+  .page__photo img { display: block; max-width: 100%; max-height: calc(var(--bw) * 0.92); width: auto; height: auto; border-radius: 2px; }
+  .page__photo figcaption {
     width: 0;
     min-width: 100%;
-    padding: 10px 4px 13px;
+    padding: 9px 4px 12px;
     font-family: var(--hand);
     font-size: 19px;
     font-weight: 600;
@@ -1259,13 +1321,22 @@
     text-align: center;
     color: var(--ink);
   }
-  .album__item.reveal { opacity: 0; transform: translateY(30px) rotate(calc(var(--rest) * 2)) scale(0.94); transition: opacity 0.8s ease, transform 1s cubic-bezier(0.2, 1.25, 0.4, 1); }
-  .album__item.reveal.is-in { opacity: 1; transform: rotate(var(--rest)); }
-  .album__hint { margin: 0; text-align: center; font-size: 13px; color: var(--ink-faint); }
-  @media (min-width: 900px) {
-    .album__track { justify-content: safe center; }
-    .album__item img { height: 340px; }
+  .page__num { position: absolute; bottom: 10px; left: 0; right: 0; margin: 0; text-align: center; font-size: 11px; letter-spacing: 0.14em; color: var(--ink-faint); }
+
+  .book__nav { display: flex; align-items: center; justify-content: center; gap: 16px; margin-top: 22px; }
+  .book__count { margin: 0; min-width: 190px; text-align: center; font-size: 13px; letter-spacing: 0.04em; color: var(--ink-soft, var(--ink-faint)); }
+  .book__btn {
+    width: 40px; height: 40px;
+    border: 1px solid var(--line);
+    border-radius: 50%;
+    background: #FFFFFF;
+    font-size: 24px; line-height: 1;
+    color: var(--rose-deep);
+    box-shadow: 0 8px 16px -10px rgba(90, 35, 50, 0.5);
   }
+  .book__btn:disabled { opacity: 0.3; box-shadow: none; }
+  @media (prefers-reduced-motion: reduce) { .leaf, .leaf.is-turned { transition: none; } .cover__hint { animation: none; } }
+  @media (min-width: 900px) { .book { --bw: 340px; } }
 
   /* --- Photo en grand --- */
   .lb {
@@ -1868,47 +1939,18 @@
     </div>
   </section>
 
-  <!-- 3b. Quand elle etait petite -->
+  <!-- 3b. L'album : quand elle etait petite -->
   <section class="album wrap">
     <div class="album__head reveal">
       <h2 class="album__title">Bien avant moi</h2>
       <p class="eyebrow">Déjà adorable</p>
     </div>
-    <div class="album__track" id="albumTrack">
-      <figure class="album__item reveal">
-        <img src="photos/petite-1-bras.jpg" alt="Brigitte bébé dans les bras d'une petite fille" loading="lazy">
-        <figcaption>Bien entourée, déjà</figcaption>
-      </figure>
-      <figure class="album__item reveal">
-        <img src="photos/petite-2-nouveau-ne.jpg" alt="Brigitte nouveau-née, les yeux grands ouverts" loading="lazy">
-        <figcaption>Les tout premiers jours</figcaption>
-      </figure>
-      <figure class="album__item reveal">
-        <img src="photos/petite-3-regard.jpg" alt="Brigitte bébé, avec une barboteuse orange" loading="lazy">
-        <figcaption>Ce regard, déjà</figcaption>
-      </figure>
-      <figure class="album__item reveal">
-        <img src="photos/petite-4-joues.jpg" alt="Brigitte bébé en gros plan" loading="lazy">
-        <figcaption>Ces petites joues…</figcaption>
-      </figure>
-      <figure class="album__item reveal">
-        <img src="photos/petite-5-serieuse.jpg" alt="Brigitte bébé au regard sérieux, en t-shirt blanc" loading="lazy">
-        <figcaption>Déjà du caractère</figcaption>
-      </figure>
-      <figure class="album__item reveal">
-        <img src="photos/petite-6-dos.jpg" alt="Brigitte bébé sur le dos d'une grande personne" loading="lazy">
-        <figcaption>Au chaud, sur le dos</figcaption>
-      </figure>
-      <figure class="album__item reveal">
-        <img src="photos/petite-7-coucou.jpg" alt="Brigitte bébé qui fait un signe de la main" loading="lazy">
-        <figcaption>Coucou !</figcaption>
-      </figure>
-      <figure class="album__item reveal">
-        <img src="photos/petite-8-bain.jpg" alt="Brigitte bébé qui sourit dans une bassine" loading="lazy">
-        <figcaption>Ce sourire dans la bassine</figcaption>
-      </figure>
+    <div class="book reveal" id="book" tabindex="0" role="group" aria-label="Album photo : touche ou glisse pour tourner les pages"></div>
+    <div class="book__nav reveal">
+      <button class="book__btn" id="bookPrev" type="button" aria-label="Page précédente">‹</button>
+      <p class="book__count" id="bookCount" aria-live="polite">Touche l'album pour l'ouvrir</p>
+      <button class="book__btn" id="bookNext" type="button" aria-label="Page suivante">›</button>
     </div>
-    <p class="album__hint">Glisse pour voir les autres →</p>
   </section>
 
   <!-- 4. Les photos ---------------------------------------------- -->
@@ -3252,6 +3294,91 @@
   }
   function watchNote() { if (noteWatcher) { noteWatcher.observe(note); } else { typeFinish(); } }
 
+  /* --- L'album : un livre dont on tourne les pages --- */
+  (function () {
+    var book = $("book"), prevB = $("bookPrev"), nextB = $("bookNext"), count = $("bookCount");
+    if (!book) { return; }
+    var PAGES = [
+      ["petite-1-bras", "Bien entourée, déjà", "Brigitte bébé dans les bras d'une petite fille"],
+      ["petite-2-nouveau-ne", "Les tout premiers jours", "Brigitte nouveau-née, les yeux grands ouverts"],
+      ["petite-3-regard", "Ce regard, déjà", "Brigitte bébé, en barboteuse orange"],
+      ["petite-4-joues", "Ces petites joues…", "Brigitte bébé en gros plan"],
+      ["petite-5-serieuse", "Déjà du caractère", "Brigitte bébé au regard sérieux, en t-shirt blanc"],
+      ["petite-6-dos", "Au chaud, sur le dos", "Brigitte bébé sur le dos d'une grande personne"],
+      ["petite-7-coucou", "Coucou !", "Brigitte bébé qui fait un signe de la main"],
+      ["petite-8-bain", "Ce sourire dans la bassine", "Brigitte bébé qui sourit dans une bassine"]
+    ];
+    var rests = [-1.5, 1.5, -1, 2, -2, 1, -1.5, 1.5];
+    var leaves = [];
+
+    function leaf(i, front, back) {
+      var l = document.createElement("div");
+      l.className = "leaf";
+      l.style.setProperty("--i", i);
+      l.appendChild(front);
+      var b = document.createElement("div");
+      b.className = "leaf__face leaf__face--back";
+      l.appendChild(b);
+      book.appendChild(l);
+      leaves.push(l);
+    }
+
+    var cover = document.createElement("div");
+    cover.className = "leaf__face leaf__face--cover";
+    cover.innerHTML = '<svg class="cover__heart" viewBox="0 0 100 92" aria-hidden="true"><use href="#heart-shape"/></svg>' +
+      '<p class="cover__name">Brigitte</p><p class="cover__sub">toute petite</p>' +
+      '<p class="cover__hint">Touche pour ouvrir</p>';
+    leaf(0, cover);
+
+    PAGES.forEach(function (p, k) {
+      var f = document.createElement("div");
+      f.className = "leaf__face leaf__face--page";
+      var fig = document.createElement("figure");
+      fig.className = "page__photo";
+      fig.style.setProperty("--rest", rests[k] + "deg");
+      var img = document.createElement("img");
+      img.src = "photos/" + p[0] + ".jpg";
+      img.alt = p[2];
+      img.loading = "lazy";
+      img.draggable = false;
+      var cap = document.createElement("figcaption");
+      cap.textContent = p[1];
+      fig.appendChild(img); fig.appendChild(cap);
+      var num = document.createElement("p");
+      num.className = "page__num";
+      num.textContent = (k + 1) + " / " + PAGES.length;
+      f.appendChild(fig); f.appendChild(num);
+      leaf(k + 1, f);
+    });
+
+    var pos = 0, max = PAGES.length;   // pos = nombre de feuilles tournees
+    function render() {
+      leaves.forEach(function (l, i) { l.classList.toggle("is-turned", i < pos); });
+      prevB.disabled = pos === 0;
+      nextB.disabled = pos === max;
+      count.textContent = pos === 0 ? "Touche l'album pour l'ouvrir" : (pos === max ? "Photo " + pos + " sur " + max + " · la dernière 💗" : "Photo " + pos + " sur " + max);
+    }
+    function go(d) { pos = Math.max(0, Math.min(max, pos + d)); render(); }
+    prevB.addEventListener("click", function () { go(-1); });
+    nextB.addEventListener("click", function () { go(1); });
+
+    var x0 = null, moved = false;
+    book.addEventListener("pointerdown", function (e) { x0 = e.clientX; moved = false; });
+    book.addEventListener("pointerup", function (e) {
+      if (x0 === null) { return; }
+      var dx = e.clientX - x0; x0 = null;
+      if (Math.abs(dx) > 40) { go(dx < 0 ? 1 : -1); return; }
+      var r = book.getBoundingClientRect();
+      go(pos === 0 || e.clientX > r.left + r.width * 0.4 ? 1 : -1);
+    });
+    book.addEventListener("pointercancel", function () { x0 = null; });
+    book.addEventListener("keydown", function (e) {
+      if (e.key === "ArrowRight" || e.key === "Enter" || e.key === " ") { e.preventDefault(); go(1); }
+      if (e.key === "ArrowLeft") { e.preventDefault(); go(-1); }
+    });
+    render();
+  })();
+
   // mouvement reduit : la video reste sur sa premiere image
   (function () {
     var v = $("shadowVid");
@@ -3259,7 +3386,7 @@
   })();
 
   /* --- 4. Photos en grand --- */
-  var figs = Array.prototype.slice.call(document.querySelectorAll(".album figure, .grid figure"));
+  var figs = Array.prototype.slice.call(document.querySelectorAll(".grid figure"));
   var lb = $("lb"), lbImg = $("lbImg"), lbCap = $("lbCap");
   var lbIdx = 0, lbX = null, lbSwiped = false;
 
