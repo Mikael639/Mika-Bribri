@@ -1282,7 +1282,8 @@
     pointer-events: none;
   }
   .cover__heart { width: 34px; height: 34px; fill: #F0CD96; }
-  .cover__name { margin: 2px 0 0; font-family: var(--hand); font-size: 30px; font-weight: 600; line-height: 1.1; }
+  .cover__name { margin: 2px 0 0; font-family: var(--hand); font-size: 23px; font-weight: 600; line-height: 1.1; white-space: nowrap; }
+  .cover__ted { margin-left: 4px; font-family: system-ui, "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif; font-size: 0.78em; vertical-align: 0.05em; }
   .cover__sub { margin: 8px 0 0; font-family: var(--hand); font-size: 20px; line-height: 1.2; color: #F0CD96; }
   .cover__hint { position: absolute; bottom: 20px; margin: 0; font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase; color: rgba(255, 246, 240, 0.75); animation: bookHint 2.4s ease-in-out infinite; }
   @keyframes bookHint { 50% { opacity: 0.35; } }
@@ -1346,7 +1347,7 @@
     .page__photo { padding: 8px 8px 0; }
     .page__photo figcaption { font-size: 18px; padding: 8px 4px 10px; }
     .page__num { font-size: 11px; bottom: 10px; }
-    .cover__name { font-size: 40px; } .cover__sub { font-size: 26px; } .cover__heart { width: 46px; height: 46px; }
+    .cover__name { font-size: 34px; } .cover__sub { font-size: 26px; } .cover__heart { width: 46px; height: 46px; }
     .leaf__face--page { padding: 20px 14px 30px 22px; }
     .leaf__face--page.leaf__face--back { padding: 20px 22px 30px 14px; }
   }
@@ -3349,7 +3350,7 @@
     var cover = document.createElement("div");
     cover.className = "leaf__face leaf__face--cover";
     cover.innerHTML = '<svg class="cover__heart" viewBox="0 0 100 92" aria-hidden="true"><use href="#heart-shape"/></svg>' +
-      '<p class="cover__name">Brigitte</p><p class="cover__sub">toute petite</p>' +
+      '<p class="cover__name">Brigitte<span class="cover__ted" aria-hidden="true">🧸</span></p><p class="cover__sub">toute petite</p>' +
       '<p class="cover__hint">Touche pour ouvrir</p>';
 
     // feuille i : recto = page de droite, verso = page de gauche de la double page suivante
